@@ -1,9 +1,10 @@
-class Typisch::Type
-  class Boolean < Tagged
-    def self.top_tag
+module Typisch
+  class Type::Boolean < Type::Tagged::Singleton
+    def self.tag
       "Boolean"
     end
 
-    Tagged::RESERVED_TAGS << top_tag
+    Type::BOOLEAN = top_type
+    Type::Tagged::RESERVED_TAGS << tag
   end
 end

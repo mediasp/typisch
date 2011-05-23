@@ -53,14 +53,20 @@ class Typisch::Type
       # Types are either union types, or tagged types. We deal with the unions first.
       if Union === x || Union === y
         # To prove that a union x is a subtype of a union y, for each alternative tagged type in x
-        # we have to find a type in y with the same tag. If all of these are present, we then
-        # have to show as subgoals that the subtype relationship holds for each corresponding pair.
+        # we have to find a type in y which it can be a subtype of.
+        #
+        # Since there's no overlap between different Type::Tagged subclasses, we know we
+        # need to find a type of the same class for there to be a chance of showing this;
+        # if we find more than one type of that class though, we ask the class to pick
+        # one of them for us to proceed with as a goal. If it can't find one, we bail on
+        # the whole operation.
         #
         # (note: even if only one of x or y is a union, the other will still expose a union-like
-        #  interface as a union with only one type, itself, in alternative_tagged_types)
-        return x.alternative_tagged_types.map do |type_in_x|
-          corresponding_in_y = y.alternative_types_by_tag[type_in_x.tag] or return false
-          [type_in_x, corresponding_in_y]
+        #  interface as a union with only one type, itself, in alternative_types)
+        return x.alternative_types.map do |type_in_x|
+          types_in_y_of_same_class = y.alternative_types_by_class[type_in_x.class] or return false
+          type_in_x.class.pick_subtype_goal_from_alternatives_in_union(
+            type_in_x, types_in_y_of_same_class) or return false
         end
       end
 

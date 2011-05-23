@@ -9,13 +9,24 @@
 # implemented separately in class methods. 
 class Typisch::Type
   def <=(other)
-    self.class.subtype?(self, other)
+    Typisch::Type.subtype?(self, other)
   end
 
   def <(other)
     self <= other && !(self >= other)
   end
 
+  # N.B. equality is based on the subtyping algorithm. So, we cannot rely on
+  # using == on types inside any methods used in the subtyping algorithm.
+  # We must rely only on .equal? instance equality instead.
+  #
+  # Note that we have *not* overridden hash and eql? to be compatible with
+  # this subtyping-based equality, since it's not easy to find a unique
+  # representative of the equivalence class on which to base a hash function.
+  #
+  # This means that hash lookup of types will remain based on instance
+  # equality, and can safely be used inside the subtyping logic without 
+  # busting the stack
   def ==(other)
     self <= other && self >= other
   end
@@ -29,7 +40,11 @@ class Typisch::Type
   end
 
   def <=>(other)
-    (other <= self ? 1 : 0) - (self <= other ? 1 : 0)
+    if other <= self
+      self <= other ? 0 : 1
+    else
+      self <= other ? -1 : nil
+    end
   end
 
   def inspect
@@ -42,11 +57,7 @@ class Typisch::Type
 
   # For convenience. Type::Tagged will implement this as [self], whereas
   # Type::Union will implement it as its full list of alternative tagged types.
-  def alternative_tagged_types
-    raise NotImplementedError
-  end
-  
-  def alternative_types_by_tag
+  def alternative_types
     raise NotImplementedError
   end
 end

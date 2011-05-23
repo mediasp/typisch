@@ -1,9 +1,10 @@
-class Typisch::Type
-  class Null < Tagged
-    def self.top_tag
+module Typisch
+  class Type::Null < Type::Tagged::Singleton
+    def self.tag
       "Null"
     end
 
-    Tagged::RESERVED_TAGS << top_tag
+    Type::NULL = top_type
+    Type::Tagged::RESERVED_TAGS << tag
   end
 end
