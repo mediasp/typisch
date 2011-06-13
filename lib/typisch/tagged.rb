@@ -46,7 +46,7 @@ module Typisch
       end
       
       # Where there are a number of alternatives in a Union type of this class,
-      # which the given type x (also of this class) might be a subtype, we are
+      # of which the given type x (also of this class) might be a subtype, we are
       # asked to pick one.
       #
       # If we can find one y which x *might* be a subtype of, we return the pair

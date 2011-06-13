@@ -47,6 +47,19 @@ class Typisch::Type
     end
   end
 
+  # Union and intersection
+  
+  def union(*others)
+    Union.union(self, *others)
+  end
+  alias :| :union
+
+  def intersection(*others)
+    Interesction.intersection(self, *others)
+  end
+  alias :& :intersection
+
+
   def inspect
     "#<#{self.class} #{to_s}>"
   end

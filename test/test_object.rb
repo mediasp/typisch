@@ -72,12 +72,7 @@ describe "Object types" do
     assert_operator recursive, :<, recursive2
     refute_operator recursive, :>, recursive1
   end
-  
-  class TestClass; end
-  module TestModule; end
-  class TestSubclass < TestClass; include TestModule; end
-  class TestClass2; include TestModule; end
-  
+    
   it "should subtype according to the inheritance graph based on ruby classes or modules with equivalent names to the specified type tags" do
     assert_operator Type::Object.new('TestSubclass'), :<, Type::Object.new('TestClass')
     refute_operator Type::Object.new('TestSubclass'), :>=, Type::Object.new('TestClass')

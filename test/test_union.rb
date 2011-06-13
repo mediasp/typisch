@@ -49,11 +49,23 @@ describe "Union types" do
   end
   
   describe "union" do
+    it "should allow either syntax: <type>.union(other) or Type::Union.union(type, other)" do
+      assert_equal \
+        Type::Union.union(Type::BOOLEAN, Type::INTEGRAL),
+        Type::BOOLEAN.union(Type::INTEGRAL)
+    end
+
     it "should happily keep distinct unions of types of different Type::Tagged subclasses" do
       union = Type::Union.union(Type::BOOLEAN, Type::INTEGRAL)
       assert_equal 2, union.alternative_types.length
       assert union.alternative_types.include?(Type::BOOLEAN)
       assert union.alternative_types.include?(Type::INTEGRAL)
+    end
+    
+    it "should not be sensitive to ordering when doing comparisons" do
+      assert_equal \
+        Type::Union.union(Type::BOOLEAN, Type::INTEGRAL),
+        Type::Union.union(Type::INTEGRAL, Type::BOOLEAN)
     end
     
     it "should return the NOTHING type for an empty union" do
@@ -97,6 +109,86 @@ describe "Union types" do
       tup_union = Type::Union.union(Type::Tuple.new(Type::BOOLEAN, Type::INTEGRAL), Type::Tuple.new(Type::NULL, Type::REAL))
       assert_equal Type::Tuple.new(Type::Union.union(Type::BOOLEAN, Type::NULL), Type::REAL), tup_union
     end
+
+    describe "when computing least upper bounds of different object types" do
+      it "should take only slots present in all the object types in the union" do
+        union = Type::Union.union(
+          Type::Object.new('Object', :foo => Type::INTEGRAL, :bar => Type::BOOLEAN),
+          Type::Object.new('Object', :boo => Type::INTEGRAL, :bar => Type::BOOLEAN)
+        )
+        assert_equal Type::Object.new('Object', :bar => Type::BOOLEAN), union
+      end
+
+      it "should recursively taking the union of the types in their shared slots" do
+        union = Type::Union.union(
+          Type::Object.new('Object', :foo => Type::INTEGRAL, :bar => Type::BOOLEAN),
+          Type::Object.new('Object', :boo => Type::INTEGRAL, :bar => Type::NULL)
+        )
+        assert_equal Type::Object.new('Object', :bar => Type::Union.union(Type::BOOLEAN, Type::NULL)), union
+      end
+
+      it "should leave separate clauses in the union where their type tags are non-overlapping" do
+        union = Type::Union.union(
+          Type::Object.new('TestClass'),
+          Type::Object.new('TestClass2')
+        )
+        assert_equal 2, union.alternative_types.length
+      end
+
+      it "should, when type tags have a common upper bound amongst them, pick the right upper bound" do
+        union = Type::Union.union(
+          Type::Object.new('TestSubclass'),
+          Type::Object.new('TestClass')
+        )
+        assert_equal 1, union.alternative_types.length
+        assert_equal 'TestClass', union.alternative_types[0].tag
+        
+        union = Type::Union.union(
+          Type::Object.new('TestClass'),
+          Type::Object.new('TestSubclass')
+        )
+        assert_equal 1, union.alternative_types.length
+        assert_equal 'TestClass', union.alternative_types[0].tag
+        
+        union = Type::Union.union(
+          Type::Object.new('TestClass2'),
+          Type::Object.new('TestSubclass'),
+          Type::Object.new('TestModule')
+        )
+        assert_equal 1, union.alternative_types.length
+        assert_equal 'TestModule', union.alternative_types[0].tag
+      end
+      
+      it "should group types into separate union clauses by their upper bounds when there are non-overlapping groups some of which can be unified" do
+        union = Type::Union.union(
+          # one group
+          Type::Object.new('TestClass2'),
+          # another
+          Type::Object.new('TestClass'),
+          Type::Object.new('TestSubclass')
+        )
+        assert_equal 2, union.alternative_types.length
+        assert_includes union.alternative_types, Type::Object.new('TestClass2')
+        assert_includes union.alternative_types, Type::Object.new('TestClass')
+      end
+
+      it "should unify properties within these groups but leave differences in properties intact across these groups" do
+        union = Type::Union.union(
+          Type::Object.new('TestClass2', :baz => Type::STRING),
+          
+          Type::Object.new('TestClass', :foo => Type::BOOLEAN, :bar => Type::BOOLEAN),
+          Type::Object.new('TestSubclass', :foo => Type::NULL, :baz => Type::BOOLEAN)
+        )
+        assert_equal 2, union.alternative_types.length
+        assert_includes union.alternative_types, Type::Object.new('TestClass',
+          :foo => Type::Union.union(Type::BOOLEAN, Type::NULL)
+        )
+        assert_includes union.alternative_types, Type::Object.new('TestClass2', 
+          :baz => Type::STRING
+        )
+      end
+    end
+
 
   end
 end
