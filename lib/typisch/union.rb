@@ -4,16 +4,16 @@ module Typisch
 
     class << self
       private :new
-      
+
       def union(*types)
         # Use the special Type::Nothing singleton
         # for an empty union. (Nothing is just an empty union,
         # except with a special name).
-        return Type::NOTHING if types.length == 0
-        
+        return Type::Nothing::INSTANCE if types.length == 0
+
         # Not much point in a union with only one clause
         return types.first if types.length == 1
-        
+
         # Expand any unions amongst the constituent types
         # (we only need to do this one level deep, as
         # any unions will have been flattened themselves
@@ -23,7 +23,7 @@ module Typisch
         # We now have only Type::Tagged types, no union types;
         # group them by their Type::Tagged subclass and then
         # get the respective subclasses to consolidate the alternatives
-        # of that class into a least upper bound (or list of 
+        # of that class into a least upper bound (or list of
         # non-overlapping alternative least upper bounds for a
         # tagged union):
         by_class = types.group_by(&:class)
@@ -37,7 +37,7 @@ module Typisch
           types = by_class.values.first
           return types.first if types.length == 1
         end
-        
+
         new(by_class)
       end
     end
@@ -51,20 +51,21 @@ module Typisch
       @alternative_types.join(' | ')
     end
   end
-  
+
   # The Nothing (or 'bottom') type is just an empty Union:
   class Type::Nothing < Type::Union
     def initialize
       super({})
     end
-    
+
     def to_s
       "Nothing"
     end
 
-    Type::NOTHING = new
+    INSTANCE = new
+    Registry.register_global_type(:nothing, INSTANCE)
   end
-  
+
   # The Any (or 'top') type is just a union of all the top types of the various Type::Tagged
   # subclasses:
   class Type::Any < Type::Union
@@ -75,11 +76,12 @@ module Typisch
       end
       super(top_tagged_types)
     end
-    
+
     def to_s
       "Any"
     end
-    
-    Type::ANY = new
+
+    INSTANCE = new
+    Registry.register_global_type(:any, INSTANCE)
   end
 end

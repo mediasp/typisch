@@ -4,7 +4,7 @@ class Typisch::Type
       def top_type(*)
         new("Object")
       end
-              
+
       def subgoals_to_prove_subtype(x, y)
         return false unless x.class_or_module <= y.class_or_module
         y.property_names_to_types.map do |y_propname, y_type|
@@ -12,7 +12,7 @@ class Typisch::Type
           [x_type, y_type]
         end
       end
-      
+
       # the object types in the union are guaranteed to have non-overlapping
       # class_or_module's, as we chose them that way; so, we can find (zero or)
       # one of them uniquely to test as a possible supertype of some object
@@ -21,13 +21,13 @@ class Typisch::Type
         y_choice = alternative_ys.find {|y| x.class_or_module <= y.class_or_module}
         y_choice && [x, y_choice]
       end
-      
+
       def least_upper_bounds_for_union(*objects)
         groups_by_upper_bound = []
         objects.each do |object|
           # this needs a cleanup, essentially we're forming clusters of comparable items
           # within a poset
-          
+
           dominated, rest = groups_by_upper_bound.partition do |bound, group|
             bound <= object.class_or_module
           end
@@ -42,7 +42,7 @@ class Typisch::Type
           else
             object.class_or_module
           end
-          
+
           merged_group = (dominated + dominating).map {|bound,group| group}.flatten
           merged_group << object
           rest << [new_bound, merged_group]
@@ -53,11 +53,11 @@ class Typisch::Type
           union_properties(bound.to_s, group)
         end
       end
-      
+
       def union_properties(tag, objects)
         # first we figure out which properties they all have in common:
         shared_property_names = objects.map(&:property_names).inject(:&)
-        
+
         # then union these:
         properties = {}
         shared_property_names.each do |name|
@@ -79,18 +79,18 @@ class Typisch::Type
           end
         end
       end
-      
+
       # Finds the least upper bound of two ruby classes or modules.
       # eg
       # > ruby_modules_least_upper_bound(Fixnum, Float)
       #  => Precision
-      # 
+      #
       # Looks for the first class or module which appears in all the ancestors
       # arrays. In the case of modules, there may not be any common 'ancestor'
       # so we just return Object, since everything's guaranteed to be one of
       # those.
       def ruby_modules_least_upper_bound(*modules)
-        # there's no special 'Nothing' class in ruby 
+        # there's no special 'Nothing' class in ruby
         return if modules.empty?
 
         ancestors = modules.map(&:ancestors).flatten(1)
@@ -101,7 +101,7 @@ class Typisch::Type
         end
         return ::Object
       end
-      
+
       # Finds out whether or not the two modules 'overlap'.
       # If these are two Classes the question is easy to settle,
       # either one of them is a subclass of the other, or no.
@@ -130,7 +130,7 @@ class Typisch::Type
         end
         return false
       end
-      
+
     end
 
     def initialize(tag, property_names_to_types={})
@@ -152,7 +152,7 @@ class Typisch::Type
     def [](property_name)
       @property_names_to_types[property_name]
     end
-    
+
     def to_s
       pairs = @property_names_to_types.map {|n,t| "#{n}: #{t}"}
       "#{@tag} {#{pairs.join(', ')}}"

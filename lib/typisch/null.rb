@@ -4,7 +4,7 @@ module Typisch
       "Null"
     end
 
-    Type::NULL = top_type
+    Registry.register_global_type(:null, top_type)
     Type::Tagged::RESERVED_TAGS << tag
   end
 end

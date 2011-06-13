@@ -1,12 +1,16 @@
 require 'test/common'
 
 describe "Sequence types" do
-  it "should subtype covariantly in the argument type" do
-    assert_operator Type::Sequence.new(Type::INTEGRAL), :<, Type::Sequence.new(Type::REAL)
-    assert_equal Type::Sequence.new(Type::INTEGRAL), Type::Sequence.new(Type::INTEGRAL)
-    refute_operator Type::Sequence.new(Type::REAL), :<, Type::Sequence.new(Type::INTEGRAL)
+  before do
+    @types = Registry.new
   end
-    
+
+  it "should subtype covariantly in the argument type" do
+    assert_operator Type::Sequence.new(@types[:integer]), :<, Type::Sequence.new(@types[:real])
+    assert_equal Type::Sequence.new(@types[:integer]), Type::Sequence.new(@types[:integer])
+    refute_operator Type::Sequence.new(@types[:real]), :<, Type::Sequence.new(@types[:integer])
+  end
+
   it "should compute equality successfully for a recursive type (ie cyclic graph of types)" do
     # todo: less cludgey way of wiring up these cyclic object graphs
     recursive = Type::Sequence.allocate
@@ -31,6 +35,6 @@ describe "Sequence types" do
     assert_equal recursive2, recursive3
     assert_equal recursive3, recursive4
 
-    refute_equal recursive, Type::Sequence.new(Type::NULL)
+    refute_equal recursive, Type::Sequence.new(@types[:null])
   end
 end

@@ -4,7 +4,7 @@ module Typisch
       "String"
     end
 
-    Type::STRING = top_type
+    Registry.register_global_type(:string, top_type)
     Type::Tagged::RESERVED_TAGS << tag
   end
 end

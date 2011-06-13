@@ -1,7 +1,10 @@
-module Typisch  
+module Typisch
 end
 require 'typisch/type'
 require 'typisch/tagged'
+
+require 'typisch/registry'
+
 require 'typisch/boolean'
 require 'typisch/null'
 require 'typisch/numeric'
