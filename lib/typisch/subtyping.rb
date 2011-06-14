@@ -15,7 +15,7 @@ class Typisch::Type
     # set of subtyping judgements to be made.
     #
     # Its dual, requiring that the judgement *is* provably *true* under the inference
-    # rules, would only allow a minimal set to be proven, and could get stuck 
+    # rules, would only allow a minimal set to be proven, and could get stuck
     # searching forever for a proof of those judgements which are neither provably false
     # nor provably true (namely, the awkward recursive ones).
     #
@@ -24,30 +24,24 @@ class Typisch::Type
     # http://en.wikipedia.org/wiki/Knaster–Tarski_theorem to show that this
     # is a least fixed point with respect to the adding of extra inferences
     # to a set of subtyping judgements, if you note that those inference rules
-    # are monotonic.
+    # are monotonic. 'Corecursion' and 'coinduction' are also terms for what's
+    # going on here.
     #
     # TODO: for best performance, should we be going depth-first or breadth-first here?
     #
     # Also TODO: when subtype? succeeds (returns true), we can safely save the resulting
     # set of judgements that were shown to be consistent, for use during future calls to
-    # subtype?. Memoization essentially.  
-    def subtype?(x, y)
-      remaining_goals = [[x,y]]
-      may_assume_proven = {}
+    # subtype?. Memoization essentially.
+    def subtype?(x, y, may_assume_proven = {})
+      return true if may_assume_proven[[x,y]]
 
-      while (goal = remaining_goals.pop)
-        next if may_assume_proven[goal]
+      subgoals = subgoals_to_prove_subtype(x, y) or return false
 
-        subgoals = subgoals_to_prove_subtype(*goal)
-        return false unless subgoals
+      may_assume_proven[[x,y]] = true
 
-        may_assume_proven[goal] = true
-        remaining_goals.push(*subgoals)
-      end
-
-      return true
+      subgoals.all? {|u,v| subtype?(u, v, may_assume_proven)}
     end
-  
+
   private
     def subgoals_to_prove_subtype(x, y)
       # Types are either union types, or tagged types. We deal with the unions first.
