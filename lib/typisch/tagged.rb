@@ -36,15 +36,15 @@ module Typisch
       def top_type(overall_top)
         raise NotImplementedError
       end
-      
+
       # This gets called by the subtyper on a Type::Tagged subclass, with two instances of
       # that subclass.
-      # By default we just check the subtag? relationship holds on their tags, but subclasses
+      # By default we just check their tags are the same, but subclasses
       # may want to override to return extra subgoals.
-      def subgoals_to_prove_subtype(x, y)
-        x.tag == y.tag && []
+      def check_subtype(x, y)
+        x.tag == y.tag
       end
-      
+
       # Where there are a number of alternatives in a Union type of this class,
       # of which the given type x (also of this class) might be a subtype, we are
       # asked to pick one.
@@ -53,7 +53,7 @@ module Typisch
       # [x, y] as a goal for further testing.
       #
       # If there are no ys which have a chance of x being a subtype of them, we
-      # return nil. 
+      # return nil.
       #
       # We should be prepared to be able to make only one unique choice from the
       # alternatives, discarding the other alternatives; to help us do this,
@@ -67,7 +67,7 @@ module Typisch
         raise "unexpected multiple alternatives of class #{self} in union" if alternative_ys.length > 1
         y = alternative_ys.first and [x, y]
       end
-      
+
       # If you support 'tagged' unions, you should group the types by
       # tag, and then return, for each tag, the respective least upper
       # bound of all types in the list with that tag.
@@ -90,25 +90,25 @@ module Typisch
     end
 
     def initialize(*); end
-  
+
     # the tag of this particular type
     def tag
       raise NotImplementedError
     end
-    
+
     def to_s
       tag
     end
-    
+
     # these are here so to implement a common interface with Type::Union
     def alternative_types
       [self]
     end
-    
+
     def alternative_types_by_class
       {self.class => [self]}
     end
-    
+
     # A class of tagged type of which there is only one type, and
     # hence only one tag.
     #
@@ -119,19 +119,19 @@ module Typisch
     class Singleton < Type::Tagged
       class << self
         private :new
-        
+
         def tag
           raise NotImplementedError
         end
-        
+
         def top_type(*)
           @top_type ||= new
         end
       end
-      
+
       def tag
         self.class.tag
-      end     
+      end
     end
   end
 end

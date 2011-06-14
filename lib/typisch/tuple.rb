@@ -4,11 +4,13 @@ class Typisch::Type
       def top_type(overall_top)
         new()
       end
-      
-      def subgoals_to_prove_subtype(x, y)
-        Array.new(y.length) {|i| [x[i], y[i]]} if x.length >= y.length
+
+      def check_subtype(x, y, &recursively_check_subtype)
+        if x.length >= y.length
+          (0...y.length).all? {|i| recursively_check_subtype[x[i], y[i]]}
+        end
       end
-      
+
       # This l.u.b. isn't as tight as it could be;
       # (Int, Int) union (Bool, Bool) is a strict subset of
       # (Int union Bool, Int union Bool), see eg (1, true).
@@ -23,7 +25,7 @@ class Typisch::Type
         end
         [new(*unions)]
       end
-      
+
     end
 
     def initialize(*types)
@@ -35,16 +37,16 @@ class Typisch::Type
     def length
       @types.length
     end
-    
+
     def [](n)
       @types[n]
     end
-    
+
     def tag
       "Tuple"
     end
     Tagged::RESERVED_TAGS << "Tuple"
-    
+
     def to_s
       "(#{@types.join(', ')})"
     end

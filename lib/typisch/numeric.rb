@@ -17,8 +17,8 @@ module Typisch
         TOWER.first
       end
 
-      def subgoals_to_prove_subtype(x, y)
-        x.index_in_tower >= y.index_in_tower && []
+      def check_subtype(x, y)
+        x.index_in_tower >= y.index_in_tower
       end
 
       def least_upper_bounds_for_union(*types)

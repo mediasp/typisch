@@ -4,11 +4,11 @@ class Typisch::Type
       def top_type(overall_top)
         new(overall_top)
       end
-      
-      def subgoals_to_prove_subtype(x, y)
-        [[x.type, y.type]]
+
+      def check_subtype(x, y, &recursively_check_subtype)
+        recursively_check_subtype[x.type, y.type]
       end
-      
+
       # note: this kind of l.u.b. is bigger than it could be;
       # a distinction is lost, in the sense that
       # [Int] union [Bool] is a strict subset of [Int union Bool],
@@ -33,9 +33,9 @@ class Typisch::Type
       "Sequence"
     end
     Tagged::RESERVED_TAGS << "Sequence"
-    
+
     attr_reader :type
-    
+
     def to_s
       "[#{@type}]"
     end

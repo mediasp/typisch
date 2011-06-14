@@ -5,11 +5,10 @@ class Typisch::Type
         new("Object")
       end
 
-      def subgoals_to_prove_subtype(x, y)
+      def check_subtype(x, y, &recursively_check_subtype)
         return false unless x.class_or_module <= y.class_or_module
-        y.property_names_to_types.map do |y_propname, y_type|
-          x_type = x[y_propname] or return false
-          [x_type, y_type]
+        y.property_names_to_types.all? do |y_propname, y_type|
+          x_type = x[y_propname] and recursively_check_subtype[x_type, y_type]
         end
       end
 

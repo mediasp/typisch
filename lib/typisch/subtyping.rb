@@ -24,7 +24,7 @@ class Typisch::Type
     # http://en.wikipedia.org/wiki/Knaster–Tarski_theorem to show that this
     # is a least fixed point with respect to the adding of extra inferences
     # to a set of subtyping judgements, if you note that those inference rules
-    # are monotonic. 'Corecursion' and 'coinduction' are also terms for what's
+    # are monotonic. 'Corecursion' / 'coinduction' are also terms for what's
     # going on here.
     #
     # TODO: for best performance, should we be going depth-first or breadth-first here?
@@ -35,43 +35,36 @@ class Typisch::Type
     def subtype?(x, y, may_assume_proven = {})
       return true if may_assume_proven[[x,y]]
 
-      subgoals = subgoals_to_prove_subtype(x, y) or return false
+      shadow_may_assume_proven = Hash.new {|h,k| may_assume_proven[k]}
+      shadow_may_assume_proven[[x,y]] = true
 
-      may_assume_proven[[x,y]] = true
-
-      subgoals.all? {|u,v| subtype?(u, v, may_assume_proven)}
+      check_subtype(x, y) do |u,v|
+        if subtype?(u, v, shadow_may_assume_proven)
+          may_assume_proven.merge!(shadow_may_assume_proven)
+          true
+        else
+          shadow_may_assume_proven = Hash.new {|h,k| may_assume_proven[k]}
+          false
+        end
+      end
     end
 
   private
-    def subgoals_to_prove_subtype(x, y)
+    def check_subtype(x, y, &recursively_check_subtype)
       # Types are either union types, or tagged types. We deal with the unions first.
-      if Union === x || Union === y
-        # To prove that a union x is a subtype of a union y, for each alternative tagged type in x
-        # we have to find a type in y which it can be a subtype of.
-        #
-        # Since there's no overlap between different Type::Tagged subclasses, we know we
-        # need to find a type of the same class for there to be a chance of showing this;
-        # if we find more than one type of that class though, we ask the class to pick
-        # one of them for us to proceed with as a goal. If it can't find one, we bail on
-        # the whole operation.
-        #
-        # (note: even if only one of x or y is a union, the other will still expose a union-like
-        #  interface as a union with only one type, itself, in alternative_types)
-        return x.alternative_types.map do |type_in_x|
-          types_in_y_of_same_class = y.alternative_types_by_class[type_in_x.class] or return false
-          type_in_x.class.pick_subtype_goal_from_alternatives_in_union(
-            type_in_x, types_in_y_of_same_class) or return false
-        end
+      if Union === x
+        x.alternative_types.all? {|t| recursively_check_subtype[t, y]}
+      elsif Union === y
+        y.alternative_types.any? {|t| recursively_check_subtype[x, t]}
+      elsif x.class == y.class
+        # Hand over to that specific Type::Tagged subclass in order to check subtyping
+        # goals which are specific to its subtype lattice.
+        x.class.check_subtype(x, y, &recursively_check_subtype)
+      else
+        # Different Type::Tagged subclasses are assumed non-overlapping, so we stop unless they're
+        # the same:
+        false
       end
-
-      # So now we definitely have two Type::Tagged types.
-      #
-      # Different Type::Tagged subclasses are assumed non-overlapping, so we stop unless they're
-      # the same:
-      return false unless x.class == y.class
-      # Now we hand over to that specific Type::Tagged subclass in order to give us any subtyping
-      # goals which are specific to its subtype lattice.
-      x.class.subgoals_to_prove_subtype(x, y)
     end
   end
 end
