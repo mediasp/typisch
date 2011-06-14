@@ -32,21 +32,33 @@ class Typisch::Type
     # Also TODO: when subtype? succeeds (returns true), we can safely save the resulting
     # set of judgements that were shown to be consistent, for use during future calls to
     # subtype?. Memoization essentially.
-    def subtype?(x, y, may_assume_proven = {})
-      return true if may_assume_proven[[x,y]]
+    def subtype?(x, y, may_assume_proven = {}, depth=0)
+#      puts "#{'  '*depth}Testing #{x.inspect} <= #{y.inspect}"
+#      puts "#{'  '*depth}#{may_assume_proven.length} Given assumptions"
+#      may_assume_proven.each_key {|a,b| puts "  #{'  '*depth}#{a.inspect} <= #{b.inspect}"}
 
+      if may_assume_proven[[x,y]]
+#        puts "#{'  '*depth}Was true by assumption\n\n"
+        return true
+      else
+#        puts "#{'  '*depth}Wasn't already assumable proven, checking subgoals where necessary:"
+      end
+
+#      puts "#{'  '*depth}Creating shadow lookup of subtype judgements with the one in progress added to it, to pass on for subgoals"
       shadow_may_assume_proven = Hash.new {|h,k| may_assume_proven[k]}
       shadow_may_assume_proven[[x,y]] = true
 
-      check_subtype(x, y) do |u,v|
-        if subtype?(u, v, shadow_may_assume_proven)
-          may_assume_proven.merge!(shadow_may_assume_proven)
-          true
-        else
-          shadow_may_assume_proven = Hash.new {|h,k| may_assume_proven[k]}
-          false
-        end
+      result = check_subtype(x, y) do |u,v|
+        subtype?(u, v, shadow_may_assume_proven, depth+1)
       end
+
+      if result
+#        puts "#{'  '*depth}Checking of subgoals succeeded, committing #{shadow_may_assume_proven.length} subtype judgements which were demonstrated in the process\n\n"
+        may_assume_proven.merge!(shadow_may_assume_proven)
+      else
+#        puts "#{'  '*depth}Checking of subgoals failed, throwing away #{shadow_may_assume_proven.length} subtype judgements which had accumulated\n\n"
+      end
+      result
     end
 
   private

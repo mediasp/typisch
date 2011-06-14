@@ -6,7 +6,7 @@
 # of extensibility.
 #
 # Instead the actual Type classes themselves are kept fairly lightweight, with the algorithms
-# implemented separately in class methods. 
+# implemented separately in class methods.
 class Typisch::Type
   def <=(other)
     Typisch::Type.subtype?(self, other)
@@ -25,7 +25,7 @@ class Typisch::Type
   # representative of the equivalence class on which to base a hash function.
   #
   # This means that hash lookup of types will remain based on instance
-  # equality, and can safely be used inside the subtyping logic without 
+  # equality, and can safely be used inside the subtyping logic without
   # busting the stack
   def ==(other)
     self <= other && self >= other
@@ -48,9 +48,9 @@ class Typisch::Type
   end
 
   # Union and intersection
-  
+
   def union(*others)
-    Union.union(self, *others)
+    Union.new(self, *others)
   end
   alias :| :union
 
@@ -61,7 +61,7 @@ class Typisch::Type
 
 
   def inspect
-    "#<#{self.class} #{to_s}>"
+    "#<Type:#{object_id} #{to_s}>"
   end
 
   def to_s

@@ -3,9 +3,8 @@ module Typisch
     attr_reader :alternative_types, :alternative_types_by_class
 
     class << self
-      private :new
-
       def union(*types)
+        raise 'temporarily deprecated, todo replace with a \'simplify unions\' graph transformation'
         # Use the special Type::Nothing singleton
         # for an empty union. (Nothing is just an empty union,
         # except with a special name).
@@ -42,9 +41,9 @@ module Typisch
       end
     end
 
-    def initialize(alternative_types_by_class)
-      @alternative_types_by_class = alternative_types_by_class
-      @alternative_types = alternative_types_by_class.values.flatten(1)
+    def initialize(*alternative_types)
+      @alternative_types = alternative_types
+      @alternative_types_by_class = alternative_types.group_by(&:class)
     end
 
     def to_s
@@ -55,7 +54,7 @@ module Typisch
   # The Nothing (or 'bottom') type is just an empty Union:
   class Type::Nothing < Type::Union
     def initialize
-      super({})
+      super
     end
 
     def to_s
@@ -63,6 +62,7 @@ module Typisch
     end
 
     INSTANCE = new
+    class << self; private :new; end
     Registry.register_global_type(:nothing, INSTANCE)
   end
 
@@ -70,11 +70,7 @@ module Typisch
   # subclasses:
   class Type::Any < Type::Union
     def initialize
-      top_tagged_types = {}
-      Tagged::TAGGED_TYPE_SUBCLASSES.each do |klass|
-        top_tagged_types[klass] = [klass.top_type(self)]
-      end
-      super(top_tagged_types)
+      super(*Tagged::TAGGED_TYPE_SUBCLASSES.map {|klass| klass.top_type(self)})
     end
 
     def to_s
@@ -82,6 +78,7 @@ module Typisch
     end
 
     INSTANCE = new
+    class << self; private :new; end
     Registry.register_global_type(:any, INSTANCE)
   end
 end
