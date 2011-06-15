@@ -20,3 +20,4 @@ require 'typisch/constructor'
 require 'typisch/union'
 
 require 'typisch/subtyping'
+require 'typisch/poset_algorithms'
