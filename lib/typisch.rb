@@ -10,6 +10,7 @@ require 'typisch/boolean'
 require 'typisch/null'
 require 'typisch/numeric'
 require 'typisch/string'
+require 'typisch/datetime'
 
 require 'typisch/tuple'
 require 'typisch/object'
