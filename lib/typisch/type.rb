@@ -73,4 +73,19 @@ class Typisch::Type
   def alternative_types
     raise NotImplementedError
   end
+  
+  # This may be called to canonicalizes the type graph starting at this type.
+  # it should always return something == to self.
+  #
+  # Before calling canonicalize recursively on other child types, it needs to
+  # first check in the existing_canonicalizations map.
+  # It should also add the mapping for self into this map and pass it on
+  # down the call graph if it does call canonicalize on child types.
+  # This is so it can work in a possibly-cyclic graph setting, as per the
+  # various other coinductive/corecursive algorithms we have for types.
+  # (unlike with subtyping though, we don't at present backtrack during
+  # canonicalization).
+  def canonicalize(existing_canonicalizations={})
+    self
+  end
 end

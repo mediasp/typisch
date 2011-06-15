@@ -28,7 +28,7 @@ module Typisch
         super
       end
 
-      # This should be the top in the type lattice for this class of taged types.
+      # This should be the top in the type lattice for this class of tagged types.
       # Its tag should be the top_tag above.
       # You are passed the overall_top, ie the top type of the overall type lattice,
       # to use; this is needed by parameterised types which want to parameterise their
@@ -39,53 +39,19 @@ module Typisch
 
       # This gets called by the subtyper on a Type::Tagged subclass, with two instances of
       # that subclass.
-      # By default we just check their tags are the same, but subclasses
-      # may want to override to return extra subgoals.
-      def check_subtype(x, y)
-        x.tag == y.tag
+      # It should return true or false; if it needs to check some subgoals,
+      # say on child types of the ones passed in, it should use the supplied
+      # 'recursively_check_subtype' block rather than calling itself recursively
+      # directly. Doing it this way means you get all the co-recursive backtracking
+      # goodness of the subtyper for free.
+      def check_subtype(x, y, &recursively_check_subtype)
+        raise NotImplementedError
       end
 
-      # Where there are a number of alternatives in a Union type of this class,
-      # of which the given type x (also of this class) might be a subtype, we are
-      # asked to pick one.
-      #
-      # If we can find one y which x *might* be a subtype of, we return the pair
-      # [x, y] as a goal for further testing.
-      #
-      # If there are no ys which have a chance of x being a subtype of them, we
-      # return nil.
-      #
-      # We should be prepared to be able to make only one unique choice from the
-      # alternatives, discarding the other alternatives; to help us do this,
-      # we can implement 'least_upper_bounds_for_union' to consolidate together
-      # types of our class which are being unioned. The list of alternatives
-      # we get here will then always be one of these consolidated lists, a
-      # tagged union effectively.
-      # (Often the list will only have one member, which is what the default
-      #  implementation assumes)
-      def pick_subtype_goal_from_alternatives_in_union(x, alternative_ys)
-        raise "unexpected multiple alternatives of class #{self} in union" if alternative_ys.length > 1
-        y = alternative_ys.first and [x, y]
-      end
-
-      # If you support 'tagged' unions, you should group the types by
-      # tag, and then return, for each tag, the respective least upper
-      # bound of all types in the list with that tag.
-      #
-      # The thing to bear in mind with tagged unions is that you'll be
-      # called upon to pick one unique choice from the clauses of a tagged
-      # union, for testing as a possible supertype of some given type.
-      # So the clauses of your tagged union must be non-overlapping, both
-      # in the subtype lattice and in terms of being able to differentiate
-      # instances when type-checking at runtime.
-      #
-      # If you don't support tagged unions, this reduces to just returning
-      # a single least upper bound of all the given types.
-      def least_upper_bounds_for_union(*types)
-        # we can't just use 'uniq' as this is based on hash/eql?, and we want based on ==.
-        result = []
-        types.uniq.each {|t| result << t unless result.include?(t)}
-        result
+      # If you have some way of unifying or grouping together or reducing or whatever,
+      # a union of types of your class, here's the place to do it.
+      def canonicalize_union(*types)
+        types
       end
     end
 
@@ -100,13 +66,9 @@ module Typisch
       tag
     end
 
-    # these are here so to implement a common interface with Type::Union
+    # this is here so as to implement a common interface with Type::Union
     def alternative_types
       [self]
-    end
-
-    def alternative_types_by_class
-      {self.class => [self]}
     end
 
     # A class of tagged type of which there is only one type, and
@@ -126,6 +88,10 @@ module Typisch
 
         def top_type(*)
           @top_type ||= new
+        end
+        
+        def check_subtype(x, y)
+          true
         end
       end
 

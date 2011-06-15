@@ -1,54 +1,55 @@
 module Typisch
   class Type::Union < Type
-    attr_reader :alternative_types, :alternative_types_by_class
-
-    class << self
-      def union(*types)
-        raise 'temporarily deprecated, todo replace with a \'simplify unions\' graph transformation'
-        # Use the special Type::Nothing singleton
-        # for an empty union. (Nothing is just an empty union,
-        # except with a special name).
-        return Type::Nothing::INSTANCE if types.length == 0
-
-        # Not much point in a union with only one clause
-        return types.first if types.length == 1
-
-        # Expand any unions amongst the constituent types
-        # (we only need to do this one level deep, as
-        # any unions will have been flattened themselves
-        # due to this precondition)
-        types.map! {|t| if t.is_a?(Type::Union) then t.alternative_types else [t] end}.flatten!(1)
-
-        # We now have only Type::Tagged types, no union types;
-        # group them by their Type::Tagged subclass and then
-        # get the respective subclasses to consolidate the alternatives
-        # of that class into a least upper bound (or list of
-        # non-overlapping alternative least upper bounds for a
-        # tagged union):
-        by_class = types.group_by(&:class)
-        by_class.each do |klass, types|
-          types.replace(klass.least_upper_bounds_for_union(*types))
-        end
-
-        # again this may have reduced us down to just a single type;
-        # if so, return it, otherwise return a Union.
-        if by_class.length == 1
-          types = by_class.values.first
-          return types.first if types.length == 1
-        end
-
-        new(by_class)
-      end
-    end
+    attr_reader :alternative_types
 
     def initialize(*alternative_types)
       @alternative_types = alternative_types
-      @alternative_types_by_class = alternative_types.group_by(&:class)
     end
 
     def to_s
       @alternative_types.join(' | ')
     end
+
+    # there are a lot of ways in which we can canonicalize unions, and it's
+    # particularly useful to have a good canonical form for them. so this is
+    # a biggie.
+    def canonicalize(existing_canonicalizations={})
+      result = existing_canonicalizations[self] and return result
+      
+      if @alternative_types.length == 0
+        # Return the special 'Nothing' type as the canonicaliszation of an
+        # empty union. (Nothing is just an empty union itself, but one with
+        # a special printed name; so this is superficial but nice to do)
+        existing_canonicalizations[self] = Type::Nothing::INSTANCE
+        return Type::Nothing::INSTANCE
+      end
+        
+      # pre-allocate a placeholder for our result, which we pass on to child
+      # nodes
+      result = existing_canonicalizations[self] = Type::Union.allocate
+
+      # find out the canonicalizations of our children:
+      types = @alternative_types.map {|t| t.canonicalize(existing_canonicalizations)}
+
+      # any of these which in turn are unions, need to get flattened out.
+      # (because we recursively canonicalised them, we know that unions within
+      # the children must only go one level deep - unless there was a cyclic
+      # reference, which we'll deal with in a sec)
+      types.map!(&:alternative_types).flatten!(1)
+
+      if types.any? {|t| t.equal?(result)}
+        raise "Disallowed recursive reference to union without a type constructor inbetween"
+      end
+
+      # now group by tagged type, and ask the relevant tagged type subclasses
+      # to canonicalize_union
+      types = types.group_by(&:class).map do |klass, types|
+        klass.canonicalize_union(*types)
+      end.flatten(1)
+
+      result.send(:initialize, *types)
+    end
+    
   end
 
   # The Nothing (or 'bottom') type is just an empty Union:
