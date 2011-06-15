@@ -26,7 +26,7 @@ module Typisch
       else
         raise "type already registered with name #{name.inspect}"
       end
-      define_instance_method(name) {type}
+      define_instance_method(name) {type} if ::Symbol === name
     end
 
     def define_instance_method(name, &block)
@@ -39,6 +39,10 @@ module Typisch
     def self.register_global_type(name, type)
       GLOBALS[name] = type
       define_method(name) {type}
+    end
+
+    def register(&block)
+      DSLContext.new(self).instance_eval(&block)
     end
   end
 
@@ -92,6 +96,26 @@ module Typisch
     def respond_to?(name, include_private=false)
       super || target.respond_to?(name, include_private)
     end
+  end
+
+  # We set up a global registry which you can use if you like, either
+  # via Typisch.global_registry or via the convenience aliases
+  # Typisch.[] and Typisch.register.
+  #
+  # Or, you can make your own registry if you don't want to share a
+  # global registry with other code using this library. (recommended
+  # if writing modular code / library code which uses this).
+
+  def self.global_registry
+    @global_registry ||= Registry.new
+  end
+
+  def self.register(&block)
+    global_registry.register(&block)
+  end
+
+  def self.[](name)
+    global_registry[name]
   end
 
 end

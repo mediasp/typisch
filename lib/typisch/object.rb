@@ -134,7 +134,7 @@ class Typisch::Type
 
     def initialize(tag, property_names_to_types={})
       @tag = tag
-      raise "expected String tag name for first argument" unless tag.is_a?(::String)
+      raise "expected String tag name for first argument" unless tag.is_a?(::String) && !tag.empty?
       @property_names_to_types = property_names_to_types
     end
 
@@ -154,7 +154,11 @@ class Typisch::Type
 
     def to_s
       pairs = @property_names_to_types.map {|n,t| "#{n}: #{t}"}
-      "#{@tag} {#{pairs.join(', ')}}"
+      if @tag == "Object"
+        "{#{pairs.join(', ')}}"
+      else
+        "#{@tag} {#{pairs.join(', ')}}"
+      end
     end
   end
 end

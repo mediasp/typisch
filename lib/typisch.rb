@@ -3,6 +3,7 @@ end
 require 'typisch/type'
 require 'typisch/constructor'
 
+require 'typisch/dsl'
 require 'typisch/registry'
 
 require 'typisch/boolean'
