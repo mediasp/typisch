@@ -32,6 +32,15 @@ class Typisch::Type
       @types = types
     end
 
+    # For now we're only allowing Array as a tuple.
+    # We could allow any Enumerable, say, but a tuple is really not supposed to be
+    # in any way a lazy data structure, it's something of fixed (usually short) length.
+    def check_type(instance, &recursively_check_type)
+      ::Array === instance &&
+      instance.length == @types.length &&
+      @types.zip(instance).all?(&recursively_check_type)
+    end
+
     attr_reader :types
 
     def length

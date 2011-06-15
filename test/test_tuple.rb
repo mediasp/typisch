@@ -79,4 +79,30 @@ describe "Tuple types" do
     assert_operator recursive, :<, recursive2
     refute_operator recursive, :>, recursive1
   end
+
+  it "should typecheck correctly" do
+    tuple = Type::Tuple.new(@boolean, @integer)
+    assert tuple === [true, 1]
+    refute tuple === [1, true]
+    refute tuple === [true, 1, nil]
+    refute tuple === [true, 1].to_enum
+  end
+
+  it "should typecheck cyclic instances against cyclic types" do
+    tuple = Type::Tuple.allocate
+    tuple.send(:initialize, @integer, tuple)
+    instance = [1]; instance << instance
+    assert tuple === instance
+
+    tuple2 = Type::Tuple.allocate
+    tuple2.send(:initialize, @integer, Type::Tuple.new(@integer, tuple2))
+    assert tuple2 === instance
+
+    instance = [1, [1, [1]]]; instance[1][1] << instance
+    assert tuple === instance
+
+    instance = [1, [1, [true]]]; instance[1][1] << instance
+    refute tuple === instance
+    refute tuple2 === instance
+  end
 end

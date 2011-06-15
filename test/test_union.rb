@@ -115,6 +115,12 @@ describe "Union types" do
       assert_operator union_tup, :<, tup_union
     end
 
+    it "should type-check basic unions" do
+      assert Type::Union.new(@integer, @null) === nil
+      assert Type::Union.new(@integer, @null) === 123
+      refute Type::Union.new(@integer, @null) === false
+    end
+
     describe "unions of object types" do
       it "should allow subtypes where they subtype any clause of the union, even when type tags don't differ (this requires backtracking)" do
         union = Type::Union.new(
@@ -213,7 +219,43 @@ describe "Union types" do
         ), union
       end
 
-      it "should unify properties within these groups but leave differences in properties intact across these groups" do
+      AbcDef = Struct.new(:abc, :def)
+
+      it "should type-check where the instance matches any clause of the union, even when type tags don't differ (this requires backtracking)" do
+        union = Type::Union.new(
+          (first_clause = Type::Object.new('AbcDef', :abc => @integer)),
+          Type::Object.new('AbcDef', :def => @integer)
+        )
+
+        # this will test twice against the two clauses in order. the first will fail, and it'll backtrack;
+        # the second will then succeed:
+        instance = AbcDef.new(nil, 123)
+        assert_operator union, :===, instance
+
+        # check that the first test didn't polute the state of the subtyper, ie that it
+        # backtracked cleanly. important that we use the same actual instance for that first clause:
+        refute_operator first_clause, :===, instance
+        # although actually, since the type-checker doesn't at present maintain state between runs, we
+        # need something a bit more tricksy to test this, see next test
+
+        # check something works against the first clause too
+        assert_operator union, :===, AbcDef.new(123, nil)
+        # and something which satisfies both clauses
+        assert_operator union, :===, AbcDef.new(123, 456)
+
+        refute_operator union, :===, AbcDef.new(nil, nil)
+      end
+
+      # this example would trip up the type checker didn't backtrack safely after eliminating the first clause
+      # in the union
+      it "should backtrack safely when type-checking against multiple clauses of a union" do
+        union = Type::Union.new(
+          @integer,
+          Type::Object.new('AbcDef', :abc => @integer)
+        )
+        instance = AbcDef.new
+        instance.abc = instance
+        refute_operator union, :===, type
       end
     end
 

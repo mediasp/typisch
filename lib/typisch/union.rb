@@ -10,6 +10,12 @@ module Typisch
       @alternative_types.join(' | ')
     end
 
+    def check_type(instance, &recursively_check_type)
+      # this relies on the safe backtracking provided by the recursively_check_type
+      # block passed in by the caller
+      @alternative_types.any? {|t| recursively_check_type[t, instance]}
+    end
+
     # there are a lot of ways in which we can canonicalize unions, and it's
     # particularly useful to have a good canonical form for them. so this is
     # a biggie.

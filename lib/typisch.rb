@@ -21,4 +21,5 @@ require 'typisch/constructor'
 require 'typisch/union'
 
 require 'typisch/subtyping'
+require 'typisch/type_checking'
 require 'typisch/poset_algorithms'

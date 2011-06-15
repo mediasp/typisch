@@ -152,6 +152,17 @@ class Typisch::Type
       @property_names_to_types[property_name]
     end
 
+    # For now, will only accept classes of object where the properties are available
+    # via attr_reader-style getter methods. TODO: maybe make allowances for objects
+    # which want to type-check via hash-style property access too.
+    def check_type(instance, &recursively_check_type)
+      instance.is_a?(class_or_module) &&
+      @property_names_to_types.all? do |prop_name, type|
+        instance.respond_to?(prop_name) &&
+        recursively_check_type[type, instance.send(prop_name)]
+      end
+    end
+
     def to_s
       pairs = @property_names_to_types.map {|n,t| "#{n}: #{t}"}
       if @tag == "Object"

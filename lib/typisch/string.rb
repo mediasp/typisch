@@ -4,6 +4,10 @@ module Typisch
       "String"
     end
 
+    def check_type(instance)
+      ::String === instance
+    end
+
     Registry.register_global_type(:string, top_type)
   end
 end

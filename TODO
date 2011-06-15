@@ -1,13 +1,9 @@
 type-checking
-  - to a certain depth?
-  - protocol for registering different ruby implementations of a type for type-checking ?
+  - informative errors on failure
+  - support type-checking Hash-like objects via [] property access
 
 easy ways to make supertypes / subtypes from existing types
+  - support for this in the class-based DSL - help registering a subtype of your superclass's type
 
-registry for naming types so recursive stuff can be done
-  - maybe this can also be the home of a nice DSL for declaring them
-
-compute unions and intersections
+compute canonicalised unions and intersections
   - make this work in combo with recursion
-
-maybe split off generic code relating to lattices, posets etc

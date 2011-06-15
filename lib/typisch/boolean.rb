@@ -4,6 +4,10 @@ module Typisch
       "Boolean"
     end
 
+    def check_type(instance)
+      instance == true || instance == false
+    end
+
     Registry.register_global_type(:boolean, top_type)
   end
 end

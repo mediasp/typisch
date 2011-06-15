@@ -3,7 +3,7 @@ require 'test/common'
 describe "Object types" do
   before do
     @registry = Registry.new
-    [:boolean, :null, :complex, :real, :rational, :integer].each do |t|
+    [:boolean, :null, :complex, :real, :rational, :integer, :string].each do |t|
       instance_variable_set("@#{t}", @registry[t])
     end
   end
@@ -80,7 +80,6 @@ describe "Object types" do
     refute_operator recursive, :>, recursive1
   end
 
-  class TestClass; end
   module TestModule; end
   class TestSubclass < TestClass; include TestModule; end
   class TestClass2; include TestModule; end
@@ -109,5 +108,55 @@ describe "Object types" do
     refute_operator Type::Object.new('TestClass', :foo => @integer), :<=, Type::Object.new('TestClass2', :foo => @integer)
 
     refute_operator Type::Object.new('TestSubclass', :foo => @real), :<=, Type::Object.new('TestClass', :foo => @integer)
+  end
+
+  it "should typecheck the object by class/module" do
+    assert Type::Object.new('TestClass') === TestClass.new
+    assert Type::Object.new('TestClass') === TestSubclass.new
+    refute Type::Object.new('TestClass') === Object.new
+
+    assert Type::Object.new('TestModule') === TestClass2.new
+    assert Type::Object.new('TestModule') === TestSubclass.new
+    refute Type::Object.new('TestModule') === TestClass.new
+
+    assert Type::Object.new('TestSubclass') === TestSubclass.new
+    refute Type::Object.new('TestSubclass') === TestClass.new
+  end
+
+  FooBar = Struct.new(:foo, :bar)
+
+  it "should typecheck the object's properties" do
+    assert Type::Object.new('Object', :foo => @boolean) === FooBar.new(true, nil)
+    refute Type::Object.new('Object', :foo => @boolean) === FooBar.new(123, nil)
+
+    assert Type::Object.new('Object', :foo => @boolean, :bar => @integer) === FooBar.new(true, 123)
+    refute Type::Object.new('Object', :foo => @boolean, :bar => @integer) === FooBar.new(true, 'x')
+    refute Type::Object.new('Object', :foo => @boolean, :bar => @integer) === FooBar.new('x', 123)
+
+    refute Type::Object.new('Object', :foo => @boolean, :bar => @integer) === Object.new
+  end
+
+  it "should require both class and properties to typecheck" do
+    assert Type::Object.new('FooBar', :foo => @boolean, :bar => @integer) === FooBar.new(true, 123)
+    refute Type::Object.new('FooBar', :foo => @boolean, :bar => @integer) === Struct.new(:foo, :bar).new(true, 123)
+    refute Type::Object.new('TestClass', :foo => @boolean, :bar => @integer) === FooBar.new(true, 123)
+    refute Type::Object.new('FooBar', :foo => @boolean, :bar => @integer) === FooBar.new(true, nil)
+  end
+
+  Book = Struct.new(:title, :author)
+  Author = Struct.new(:title, :books)
+
+  it "should type-check cyclic object graphs against cyclic schemas" do
+    book = Type::Object.allocate
+    author = Type::Object.allocate
+    book.send(:initialize, 'Book', :title => @string, :author => author)
+    author.send(:initialize, 'Author', :title => @string, :books => Type::Sequence.new(book))
+
+    book_instance = Book.new('A Concise History of Posters', nil)
+    author_instance = Author.new('John Barnicoat', [book_instance])
+    book_instance.author = author_instance
+
+    assert book === book_instance
+    assert author === author_instance
   end
 end
