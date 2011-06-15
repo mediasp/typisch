@@ -1,5 +1,5 @@
 module Typisch
-  class Type::Numeric < Type::Tagged
+  class Type::Numeric < Type::Constructor
     def initialize(type)
       @type = type
     end

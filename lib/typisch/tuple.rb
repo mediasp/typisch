@@ -1,5 +1,5 @@
 class Typisch::Type
-  class Tuple < Tagged
+  class Tuple < Constructor
     class << self
       def top_type(overall_top)
         new()
@@ -45,7 +45,7 @@ class Typisch::Type
     def tag
       "Tuple"
     end
-    Tagged::RESERVED_TAGS << "Tuple"
+    Constructor::RESERVED_TAGS << "Tuple"
 
     def to_s
       "(#{@types.join(', ')})"

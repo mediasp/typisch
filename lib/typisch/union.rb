@@ -15,7 +15,7 @@ module Typisch
     # a biggie.
     def canonicalize(existing_canonicalizations={})
       result = existing_canonicalizations[self] and return result
-      
+
       if @alternative_types.length == 0
         # Return the special 'Nothing' type as the canonicaliszation of an
         # empty union. (Nothing is just an empty union itself, but one with
@@ -23,7 +23,7 @@ module Typisch
         existing_canonicalizations[self] = Type::Nothing::INSTANCE
         return Type::Nothing::INSTANCE
       end
-        
+
       # pre-allocate a placeholder for our result, which we pass on to child
       # nodes
       result = existing_canonicalizations[self] = Type::Union.allocate
@@ -41,7 +41,7 @@ module Typisch
         raise "Disallowed recursive reference to union without a type constructor inbetween"
       end
 
-      # now group by tagged type, and ask the relevant tagged type subclasses
+      # now group by constructor type, and ask the relevant constructor type subclasses
       # to canonicalize_union
       types = types.group_by(&:class).map do |klass, types|
         klass.canonicalize_union(*types)
@@ -49,7 +49,7 @@ module Typisch
 
       result.send(:initialize, *types)
     end
-    
+
   end
 
   # The Nothing (or 'bottom') type is just an empty Union:
@@ -67,11 +67,11 @@ module Typisch
     Registry.register_global_type(:nothing, INSTANCE)
   end
 
-  # The Any (or 'top') type is just a union of all the top types of the various Type::Tagged
+  # The Any (or 'top') type is just a union of all the top types of the various Type::Constructor
   # subclasses:
   class Type::Any < Type::Union
     def initialize
-      super(*Tagged::TAGGED_TYPE_SUBCLASSES.map {|klass| klass.top_type(self)})
+      super(*Constructor::CONSTRUCTOR_TYPE_SUBCLASSES.map {|klass| klass.top_type(self)})
     end
 
     def to_s

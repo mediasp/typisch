@@ -1,5 +1,5 @@
 class Typisch::Type
-  class Object < Tagged
+  class Object < Constructor
     class << self
       def top_type(*)
         new("Object")

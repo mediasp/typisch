@@ -1,5 +1,5 @@
 class Typisch::Type
-  class Sequence < Tagged
+  class Sequence < Constructor
     class << self
       def top_type(overall_top)
         new(overall_top)
@@ -32,7 +32,7 @@ class Typisch::Type
     def tag
       "Sequence"
     end
-    Tagged::RESERVED_TAGS << "Sequence"
+    Constructor::RESERVED_TAGS << "Sequence"
 
     attr_reader :type
 

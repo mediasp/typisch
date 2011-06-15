@@ -1,7 +1,7 @@
 module Typisch
 end
 require 'typisch/type'
-require 'typisch/tagged'
+require 'typisch/constructor'
 
 require 'typisch/registry'
 
@@ -14,7 +14,7 @@ require 'typisch/tuple'
 require 'typisch/object'
 
 require 'typisch/sequence'
-require 'typisch/tagged'
+require 'typisch/constructor'
 
 require 'typisch/union'
 

@@ -1,34 +1,34 @@
 module Typisch
-  # All types except Top, Bottom and Unions (which may necessarily involve more than one tagged type) have a
+  # All types except Top, Bottom and Unions (which may necessarily involve more than one constructor type) have a
   # tag associated with them which is used at runtime to distinguish its instances somewhat from instances
   # of other types.
   #
-  # This is an abstract superclass; each subclass of Type::Tagged is assumed to implement its own, distinct
-  # lattice of tags. For simple atomic types like Bool, there will only be one tag, "Bool", in that lattice.
+  # This is an abstract superclass; each subclass of Type::Constructor is assumed to implement its own, distinct
+  # lattice of types. For simple atomic types like Bool, there will only be one tag, "Bool", in that lattice.
   #
-  # While tags are assumed to be non-overlapping between different subclass of Type::Tagged, within a subclass
-  # (such as Type::Object or Type::Numeric) there may be a non-trivial tag lattice, eg for Numeric,
-  # Int < Float, and for Object, the tag lattice may be based on a nominal subtyping inheritance hierarchy in
-  # the host language.
+  # While the type lattices of different subclass of Type::Constructor are non-overlapping, within a subclass
+  # (such as Type::Object or Type::Numeric) there may be a non-trivial type lattice, eg for Numeric,
+  # Int < Float, and for Object, the type lattice may be based on a nominal subtyping inheritance hierarchy in
+  # the host language together with structural subtyping rules for object properties.
   #
-  # A list of 'reserved tags' is maintained globally, and any Type::Tagged subtype which allows custom
+  # A list of 'reserved tags' is maintained globally, and any Type::Constructor subtype which allows custom
   # user-specified tags to be used should ensure that they don't match any reserved tags.
-  class Type::Tagged < Type
+  class Type::Constructor < Type
     RESERVED_TAGS = []
-    TAGGED_TYPE_SUBCLASSES = []
+    CONSTRUCTOR_TYPE_SUBCLASSES = []
 
     class << self
       def inherited(subclass)
         # we add any non-abstract subclasses to this list, which is used to
-        # construct the Any type. For now Tagged::Singleton is the only
-        # other abstract Type::Tagged subclass:
-        unless subclass == Type::Tagged::Singleton
-          TAGGED_TYPE_SUBCLASSES << subclass
+        # construct the Any type. For now Constructor::Singleton is the only
+        # other abstract Type::Constructor subclass:
+        unless subclass == Type::Constructor::Singleton
+          CONSTRUCTOR_TYPE_SUBCLASSES << subclass
         end
         super
       end
 
-      # This should be the top in the type lattice for this class of tagged types.
+      # This should be the top in the type lattice for this class of taged types.
       # Its tag should be the top_tag above.
       # You are passed the overall_top, ie the top type of the overall type lattice,
       # to use; this is needed by parameterised types which want to parameterise their
@@ -37,7 +37,7 @@ module Typisch
         raise NotImplementedError
       end
 
-      # This gets called by the subtyper on a Type::Tagged subclass, with two instances of
+      # This gets called by the subtyper on a Type::Constructor subclass, with two instances of
       # that subclass.
       # It should return true or false; if it needs to check some subgoals,
       # say on child types of the ones passed in, it should use the supplied
@@ -66,19 +66,19 @@ module Typisch
       tag
     end
 
-    # this is here so as to implement a common interface with Type::Union
+    # these are here so as to implement a common interface with Type::Union
     def alternative_types
       [self]
     end
 
-    # A class of tagged type of which there is only one type, and
+    # A class of constructor type of which there is only one type, and
     # hence only one tag.
     #
     # Will have no supertype besides Any, and no subtype besides
     # Nothing.
     #
     # (abstract superclass; see Boolean or Null for example subclasses).
-    class Singleton < Type::Tagged
+    class Singleton < Type::Constructor
       class << self
         private :new
 
@@ -89,7 +89,7 @@ module Typisch
         def top_type(*)
           @top_type ||= new
         end
-        
+
         def check_subtype(x, y)
           true
         end

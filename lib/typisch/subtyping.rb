@@ -63,17 +63,17 @@ class Typisch::Type
 
   private
     def check_subtype(x, y, &recursively_check_subtype)
-      # Types are either union types, or tagged types. We deal with the unions first.
+      # Types are either union types, or constructor types. We deal with the unions first.
       if Union === x
         x.alternative_types.all? {|t| recursively_check_subtype[t, y]}
       elsif Union === y
         y.alternative_types.any? {|t| recursively_check_subtype[x, t]}
       elsif x.class == y.class
-        # Hand over to that specific Type::Tagged subclass in order to check subtyping
+        # Hand over to that specific Type::Constructor subclass in order to check subtyping
         # goals which are specific to its subtype lattice.
         x.class.check_subtype(x, y, &recursively_check_subtype)
       else
-        # Different Type::Tagged subclasses are assumed non-overlapping, so we stop unless they're
+        # Different Type::Constructor subclasses are assumed non-overlapping, so we stop unless they're
         # the same:
         false
       end

@@ -68,12 +68,12 @@ class Typisch::Type
     raise NotImplementedError
   end
 
-  # For convenience. Type::Tagged will implement this as [self], whereas
-  # Type::Union will implement it as its full list of alternative tagged types.
+  # For convenience. Type::Constructor will implement this as [self], whereas
+  # Type::Union will implement it as its full list of alternative constructor types.
   def alternative_types
     raise NotImplementedError
   end
-  
+
   # This may be called to canonicalizes the type graph starting at this type.
   # it should always return something == to self.
   #

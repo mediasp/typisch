@@ -1,6 +1,6 @@
 require 'test/common'
 
-describe "basic Type::Tagged subclasses (Boolean, Null, Numeric, ...)" do
+describe "basic Type::Constructor subclasses (Boolean, Null, Numeric, ...)" do
 
   before do
     @registry = Registry.new

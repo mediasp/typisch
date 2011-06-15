@@ -1,10 +1,10 @@
 module Typisch
-  class Type::Null < Type::Tagged::Singleton
+  class Type::Null < Type::Constructor::Singleton
     def self.tag
       "Null"
     end
 
     Registry.register_global_type(:null, top_type)
-    Type::Tagged::RESERVED_TAGS << tag
+    Type::Constructor::RESERVED_TAGS << tag
   end
 end

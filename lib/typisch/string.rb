@@ -1,10 +1,10 @@
 module Typisch
-  class Type::String < Type::Tagged::Singleton
+  class Type::String < Type::Constructor::Singleton
     def self.tag
       "String"
     end
 
     Registry.register_global_type(:string, top_type)
-    Type::Tagged::RESERVED_TAGS << tag
+    Type::Constructor::RESERVED_TAGS << tag
   end
 end
