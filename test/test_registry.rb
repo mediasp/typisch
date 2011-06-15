@@ -74,4 +74,23 @@ describe "Registry" do
     end
   end
 
+  it "should let you dup a registry safely" do
+    dup = @registry.dup
+    dup[:foo] = @registry[:boolean]
+    refute_same dup.types_by_name, @registry.types_by_name
+    assert Typisch::Type::Boolean === dup[:foo]
+    refute Typisch::Type::Boolean === @registry[:foo]
+  end
+
+  it "should let you merge registries" do
+    @registry2 = Registry.new
+    @registry2[:foo] = @registry[:boolean]
+    @registry[:bar] = @registry[:integer]
+    merged = @registry.merge(@registry2)
+    assert Typisch::Type::Boolean === merged[:foo]
+    assert Typisch::Type::Numeric === merged[:bar]
+    refute Typisch::Type::Boolean === @registry[:foo]
+  end
+
+
 end

@@ -26,11 +26,6 @@ module Typisch
       else
         raise "type already registered with name #{name.inspect}"
       end
-      define_instance_method(name) {type} if ::Symbol === name
-    end
-
-    def define_instance_method(name, &block)
-      (class << self; self; end).send(:define_method, name, &block)
     end
 
     # While loading, we'll register various types in this hash of types
@@ -38,16 +33,34 @@ module Typisch
     GLOBALS = {}
     def self.register_global_type(name, type)
       GLOBALS[name] = type
-      define_method(name) {type}
     end
 
     def register(&block)
       DSLContext.new(self).instance_eval(&block)
     end
+
+    # Allow you to dup and merge registries
+
+    def initialize_copy(other)
+      @types_by_name = @types_by_name.dup
+    end
+
+    def merge(other)
+      dup.merge!(other)
+    end
+
+    def merge!(other)
+      @types_by_name.merge!(other.types_by_name)
+    end
   end
 
   # This is a proxy wrapper for a type, which we can use as a placeholder for a named
-  # type which hasn't yet been declared. Helps when it comes to cyclic references etc/
+  # type which hasn't yet been declared. Helps when it comes to cyclic references etc.
+  #
+  # (You can view this as a free variable, where the scope of all free variables is
+  #  implicitly closed over at the top level by the 'registry'. We don't keep variables
+  #  lying around as symbolic things in a syntax tree though, we're just using them as
+  #  temporary placeholders on the way to rewriting it as a syntax *graph*).
   class Type::NamedPlaceholder < Type
     def initialize(name, registry)
       @registry = registry
@@ -85,6 +98,12 @@ module Typisch
 
     def to_s
       @name.inspect
+    end
+
+    # canonicalizes to its target, meaning these placeholder wrappers will get eliminated
+    # at the canonicalization stage.
+    def canonicalize(existing=nil)
+      target
     end
 
     undef :alternative_types # let us proxy this through
