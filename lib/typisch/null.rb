@@ -5,6 +5,5 @@ module Typisch
     end
 
     Registry.register_global_type(:null, top_type)
-    Type::Constructor::RESERVED_TAGS << tag
   end
 end

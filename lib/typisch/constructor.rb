@@ -8,13 +8,12 @@ module Typisch
   #
   # While the type lattices of different subclass of Type::Constructor are non-overlapping, within a subclass
   # (such as Type::Object or Type::Numeric) there may be a non-trivial type lattice, eg for Numeric,
-  # Int < Float, and for Object, the type lattice may be based on a nominal subtyping inheritance hierarchy in
+  # Int < Float, and for Object, the type lattice is based on a nominal tag inheritance hierarchy in
   # the host language together with structural subtyping rules for object properties.
   #
   # A list of 'reserved tags' is maintained globally, and any Type::Constructor subtype which allows custom
   # user-specified tags to be used should ensure that they don't match any reserved tags.
   class Type::Constructor < Type
-    RESERVED_TAGS = []
     CONSTRUCTOR_TYPE_SUBCLASSES = []
 
     class << self

@@ -32,7 +32,6 @@ class Typisch::Type
     def tag
       "Sequence"
     end
-    Constructor::RESERVED_TAGS << "Sequence"
 
     attr_reader :type
 

@@ -45,7 +45,6 @@ class Typisch::Type
     def tag
       "Tuple"
     end
-    Constructor::RESERVED_TAGS << "Tuple"
 
     def to_s
       "(#{@types.join(', ')})"
