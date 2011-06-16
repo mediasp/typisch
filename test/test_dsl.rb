@@ -50,17 +50,19 @@ describe "Registry#register / DSLContext" do
   describe "Class or Module-based DSL via Module#register_type" do
 
     it "should help you register a new object type for a class or module, registering it by default in the global registry and by a symbol corresponding to the class/module name" do
-      class Foo
-        register_type do
-          property :title, :string
-          property :bar, :Bar
+      Typisch.register do
+        class Foo
+          register_type do
+            property :title, :string
+            property :bar, :Bar
+          end
         end
-      end
 
-      module Bar
-        register_type do
-          property :title, :string
-          property :foo, :Foo
+        module Bar
+          register_type do
+            property :title, :string
+            property :foo, :Foo
+          end
         end
       end
 

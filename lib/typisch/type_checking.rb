@@ -15,14 +15,4 @@ class Typisch::Type
     result
   end
 
-private
-
-  # Inidividual type subclasses must implement this. If they need to
-  # perform some recursive typecheck, eg on child objects of the object
-  # they're validating, they should call the supplied recursively_check_type
-  # block to do so, rather than calling === directly.
-  def check_type(instance, &recursively_check_type)
-    raise NotImplementedError
-  end
-
 end

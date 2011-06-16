@@ -10,6 +10,7 @@ module Typisch
 
     def initialize
       @types_by_name = GLOBALS.dup
+      @pending_canonicalization = {}
     end
 
     def [](name)
@@ -20,12 +21,12 @@ module Typisch
       case @types_by_name[name]
       when Type::NamedPlaceholder
         @types_by_name[name].send(:target=, type)
-        @types_by_name[name] = type
       when NilClass
-        @types_by_name[name] = type
       else
-        raise "type already registered with name #{name.inspect}"
+        raise Error, "type already registered with name #{name.inspect}"
       end
+      @types_by_name[name] = type
+      @pending_canonicalization[name] = type
     end
 
     # While loading, we'll register various types in this hash of types
@@ -35,8 +36,43 @@ module Typisch
       GLOBALS[name] = type
     end
 
+    # All registering of types in a registry needs to be done inside one of these
+    # blocks; it ensures that the types are canonicalized, and any uses of recursion
+    # are validated and wired up canonically afterwards.
+    # If you really can't use the block, you can call canonicalize_registered_types!
+    # manually once you're done registering them.
+    #
+    # You can nest register blocks without ill-effect; it will only try to
+    # resolve forward references etc once the outermost block has exited.
+    #
+    # Note, this is all very much non-threadsafe, wouldn't be hard to make it so
+    # (probably just slap a big mutex around it) but not sure why exactly you'd
+    # want multi-threaded type registration anyway to anyway so leaving as-is for now.
     def register(&block)
-      DSLContext.new(self).instance_eval(&block)
+      if @registering_types
+        DSLContext.new(self).instance_eval(&block)
+      else
+        start_registering_types!
+        DSLContext.new(self).instance_eval(&block)
+        stop_registering_types!
+      end
+    end
+
+    def start_registering_types!
+      @registering_types = true
+    end
+
+    def stop_registering_types!
+      @registering_types = false
+
+      # important that we maintain the canonicalizations hash
+      # between calls, so that the different registered types know
+      # about how eachother canonicalize and don't duplicate work.
+      canonicalizations = {}
+      @pending_canonicalization.each do |name, type|
+        @types_by_name[name] = type.canonicalize(canonicalizations)
+      end
+      @pending_canonicalization = {}
     end
 
     # Allow you to dup and merge registries
@@ -71,7 +107,7 @@ module Typisch
       return @target if @target
       @target = @registry[@name]
       case @target when NilClass, Type::NamedPlaceholder
-        raise "Problem resolving named placeholder type: cannot find type with name #{@name.inspect} in registry"
+        raise NameResolutionError.new(@name.inspect)
       end
     end
 
@@ -100,13 +136,23 @@ module Typisch
       @name.inspect
     end
 
-    # canonicalizes to its target, meaning these placeholder wrappers will get eliminated
-    # at the canonicalization stage.
-    def canonicalize(existing=nil)
-      target
+    # canonicalizes to the canonicalisation of its target, meaning these placeholder
+    # wrappers will get eliminated at the canonicalization stage.
+    def canonicalize(existing_canonicalizations={}, recursion_unsafe={})
+      result = existing_canonicalizations[self] and return result
+
+      raise IllFormedRecursiveType if recursion_unsafe[self]
+      recursion_unsafe[self] = true
+
+      result = target.canonicalize(existing_canonicalizations, recursion_unsafe)
+      existing_canonicalizations[self] = result
+
+      recursion_unsafe.delete(self)
+
+      result
     end
 
-    undef :alternative_types # let us proxy this through
+    undef :alternative_types, :check_type # let us proxy these through
 
     def method_missing(name, *args, &block)
       target.respond_to?(name) ? target.send(name, *args, &block) : super

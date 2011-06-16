@@ -74,7 +74,7 @@ class Typisch::Type
     raise NotImplementedError
   end
 
-  # This may be called to canonicalizes the type graph starting at this type.
+  # This may be called to canonicalize the type graph starting at this type.
   # it should always return something == to self.
   #
   # Before calling canonicalize recursively on other child types, it needs to
@@ -85,7 +85,18 @@ class Typisch::Type
   # various other coinductive/corecursive algorithms we have for types.
   # (unlike with subtyping though, we don't at present backtrack during
   # canonicalization).
-  def canonicalize(existing_canonicalizations={})
+  def canonicalize(existing_canonicalizations=nil, recursion_unsafe=nil)
     self
   end
+
+private
+
+  # Inidividual type subclasses must implement this. If they need to
+  # perform some recursive typecheck, eg on child objects of the object
+  # they're validating, they should call the supplied recursively_check_type
+  # block to do so, rather than calling === directly.
+  def check_type(instance, &recursively_check_type)
+    raise NotImplementedError
+  end
+
 end

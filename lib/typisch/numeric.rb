@@ -58,10 +58,6 @@ module Typisch
       def check_subtype(x, y)
         x.index_in_tower >= y.index_in_tower
       end
-
-      def least_upper_bounds_for_union(*types)
-        [types.min_by(&:index_in_tower)]
-      end
     end
 
     def to_s

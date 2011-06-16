@@ -19,7 +19,7 @@ module Typisch
           send(arg, *more_args, &block_arg)
         end
       else
-        raise "expected Type or type name, but was given #{arg.class}"
+        raise ArgumentError, "expected Type or type name, but was given #{arg.class}"
       end
     end
 
@@ -60,7 +60,7 @@ module Typisch
       end
 
       def property(name, type)
-        raise "property #{name.inspect} declared twice" if @properties[name]
+        raise Error, "property #{name.inspect} declared twice" if @properties[name]
         @properties[name] = type
       end
 

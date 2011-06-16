@@ -29,7 +29,7 @@ describe "Registry" do
   it "should not let you overwrite an already-registered type" do
     my_type = Type::Tuple.new(@registry[:integer], @registry[:boolean])
 
-    assert_raises(RuntimeError) do
+    assert_raises(Error) do
       @registry[:boolean] = my_type
     end
   end
@@ -69,7 +69,7 @@ describe "Registry" do
   end
 
   it "should complain if you try to find out anything about a forward reference where the type it references hasn't yet been registered" do
-    assert_raises(RuntimeError) do
+    assert_raises(NameResolutionError) do
       @registry[:coming_soon] == @registry[:boolean]
     end
   end
@@ -92,5 +92,40 @@ describe "Registry" do
     refute Typisch::Type::Boolean === @registry[:foo]
   end
 
+  it "should ensure all types registered in a register block get canonicalized in a batch afterwards (and any recursion or name resolution errors caught)" do
+    assert_raises(IllFormedRecursiveType) do
+      @registry.register do
+        register :foo, :foo
+      end
+    end
+
+    @registry = Registry.new
+    assert_raises(NameResolutionError) do
+      @registry.register do
+        register :foo, :bar
+      end
+    end
+
+    @registry = Registry.new
+    @registry.register do
+      register :test, sequence(:test)
+    end
+    # check there is just the one node in the canonicalized graph, the NamedPlaceholder wrapper node
+    # used to issue a forward reference to 'test' prior to its registration, has been eliminated.
+    assert Type::Sequence === @registry[:test]
+    assert Type::Sequence === @registry[:test].type
+
+
+    @registry = Registry.new
+    @registry.register do
+      register :foo, sequence(:bar)
+      register :bar, tuple(:foo)
+    end
+    # check that it canonicalized all registered types together, rather than doing them separately.
+    # the difference would be that you'd see distinct instances for the same types between @registry[:foo]
+    # and @registry[:bar]
+    assert_same @registry[:bar], @registry[:foo].type
+    assert_same @registry[:foo], @registry[:bar][0]
+  end
 
 end

@@ -46,15 +46,7 @@ module Typisch
       def check_subtype(x, y, &recursively_check_subtype)
         raise NotImplementedError
       end
-
-      # If you have some way of unifying or grouping together or reducing or whatever,
-      # a union of types of your class, here's the place to do it.
-      def canonicalize_union(*types)
-        types
-      end
     end
-
-    def initialize(*); end
 
     # the tag of this particular type
     def tag

@@ -58,5 +58,12 @@ class Typisch::Type
     def to_s
       "(#{@types.join(', ')})"
     end
+
+    def canonicalize(existing_canonicalizations={}, *)
+      result = existing_canonicalizations[self] and return result
+      result = existing_canonicalizations[self] = self.class.allocate
+      result.send(:initialize, *@types.map {|t| t.canonicalize(existing_canonicalizations)})
+      result
+    end
   end
 end

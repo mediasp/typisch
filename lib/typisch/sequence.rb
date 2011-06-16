@@ -8,21 +8,6 @@ class Typisch::Type
       def check_subtype(x, y, &recursively_check_subtype)
         recursively_check_subtype[x.type, y.type]
       end
-
-      # note: this kind of l.u.b. is bigger than it could be;
-      # a distinction is lost, in the sense that
-      # [Int] union [Bool] is a strict subset of [Int union Bool],
-      # with [1, true, 2, false] in the latter but not the former.
-      #
-      # We *could* choose to hang on to this distinction as a union
-      # of separate sequence types, but it'd mean we don't get to simplify
-      # our unions as much. For now taking the road of simplifying the
-      # union and pushing it down beneath Sequence, since it's quite rare
-      # in practice to have a data type that's eg "sequence of ints OR
-      # sequence of bools, but don't mix the two"
-      def least_upper_bounds_for_union(*sequence_types)
-        [new(Type::Union.union(*sequence_types.map(&:type)))]
-      end
     end
 
     def initialize(type)
@@ -51,5 +36,13 @@ class Typisch::Type
     def to_s
       "[#{@type}]"
     end
+
+    def canonicalize(existing_canonicalizations={}, *)
+      result = existing_canonicalizations[self] and return result
+      result = existing_canonicalizations[self] = self.class.allocate
+      result.send(:initialize, @type.canonicalize(existing_canonicalizations))
+      result
+    end
+
   end
 end
