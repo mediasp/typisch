@@ -1,15 +1,17 @@
+In rough priority order:
+
+Easy ways to make supertypes / subtypes from existing types
+  - support for this in the class-based DSL - help registering a subtype of your superclass's type
+
+type-directed serialization (big win)
+
 type-checking
   - informative errors on failure
   - support type-checking Hash-like objects via [] property access
   - catch and wrap exceptions while getting data to type-check
-
-easy ways to make supertypes / subtypes from existing types
-  - support for this in the class-based DSL - help registering a subtype of your superclass's type
 
 compute canonicalised intersections
 
 an optional further lossy canonical form for unions where only structural features of all terms in the union are preserved
 
 remove vestiges of 'tag' as a first-class concept, and make Object accept a ruby class/module directly not a string
-
-override type-checking in Any to return true

@@ -74,6 +74,23 @@ class Typisch::Type
     raise NotImplementedError
   end
 
+  # should return a list of any subexpressions which are themselves types.
+  # used by any generic type-graph-traversing logic.
+  def subexpression_types
+    raise NotImplementedError
+  end
+
+  # Does this type make any use of recursion / is it an 'infinite' type?
+  def recursive?(found_so_far={})
+    found_so_far[self] or begin
+      found_so_far[self] = true
+      result = subexpression_types.any? {|t| t.recursive?(found_so_far)}
+#      subexpression_types.each {|t| raise t.inspect if t.recursive?(found_so_far)}
+      found_so_far.delete(self)
+      result
+    end
+  end
+
   # This may be called to canonicalize the type graph starting at this type.
   # it should always return something == to self.
   #

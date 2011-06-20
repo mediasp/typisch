@@ -1,6 +1,7 @@
 module Typisch
   class Type::Union < Type
     attr_reader :alternative_types
+    alias :subexpression_types :alternative_types
 
     def initialize(*alternative_types)
       @alternative_types = alternative_types
@@ -72,7 +73,6 @@ module Typisch
 
       result
     end
-
   end
 
   # The Nothing (or 'bottom') type is just an empty Union:
@@ -99,6 +99,12 @@ module Typisch
 
     def to_s
       "Any"
+    end
+
+    # skip some unnecessary work checking different alternatives, since we know everything
+    # works here:
+    def check_type(instance)
+      true
     end
 
     INSTANCE = new

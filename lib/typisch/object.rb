@@ -29,6 +29,10 @@ class Typisch::Type
       @property_names_to_types.keys
     end
 
+    def subexpression_types
+      @property_names_to_types.values
+    end
+
     def [](property_name)
       @property_names_to_types[property_name]
     end

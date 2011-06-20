@@ -14,6 +14,10 @@ class Typisch::Type
       @type = type
     end
 
+    def subexpression_types
+      [@type]
+    end
+
     # We're quite liberal in allowing any Enumerable here.
     #
     # Maybe we should be slightly more strict, or have a list of

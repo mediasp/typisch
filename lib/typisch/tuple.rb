@@ -42,6 +42,7 @@ class Typisch::Type
     end
 
     attr_reader :types
+    alias :subexpression_types :types
 
     def length
       @types.length

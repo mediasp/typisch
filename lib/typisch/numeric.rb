@@ -75,5 +75,9 @@ module Typisch
     def check_type(instance)
       case instance when *@valid_implementation_classes then true else false end
     end
+
+    def subexpression_types
+      []
+    end
   end
 end

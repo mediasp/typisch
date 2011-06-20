@@ -86,6 +86,10 @@ module Typisch
         end
       end
 
+      def subexpression_types
+        []
+      end
+
       def tag
         self.class.tag
       end
