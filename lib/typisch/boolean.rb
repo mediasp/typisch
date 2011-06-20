@@ -4,7 +4,7 @@ module Typisch
       "Boolean"
     end
 
-    def check_type(instance)
+    def shallow_check_type(instance)
       instance == true || instance == false
     end
 

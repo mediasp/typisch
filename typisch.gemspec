@@ -16,5 +16,8 @@ spec = Gem::Specification.new do |s|
   s.add_development_dependency('mocha', '~> 0.9.12')
   s.add_development_dependency('rcov', '~> 0.9.9')
 
+  # this is also an optional runtime dependency if you want to use typisch/serialization
+  s.add_development_dependency('json')
+
   s.files = Dir.glob("{lib}/**/*") + ['README.md']
 end

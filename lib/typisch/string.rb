@@ -4,7 +4,7 @@ module Typisch
       "String"
     end
 
-    def check_type(instance)
+    def shallow_check_type(instance)
       ::String === instance
     end
 

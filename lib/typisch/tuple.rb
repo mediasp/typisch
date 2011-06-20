@@ -41,6 +41,11 @@ class Typisch::Type
       @types.zip(instance).all?(&recursively_check_type)
     end
 
+    def shallow_check_type(instance)
+      ::Array === instance && instance.length == @types.length
+    end
+
+
     attr_reader :types
     alias :subexpression_types :types
 

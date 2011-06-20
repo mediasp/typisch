@@ -48,6 +48,10 @@ class Typisch::Type
       end
     end
 
+    def shallow_check_type(instance)
+      instance.is_a?(class_or_module)
+    end
+
     def to_s
       pairs = @property_names_to_types.map {|n,t| "#{n}: #{t}"}
       if @tag == "Object"

@@ -31,6 +31,10 @@ class Typisch::Type
       instance.all? {|i| recursively_check_type[@type, i]}
     end
 
+    def shallow_check_type(instance)
+      ::Enumerable === instance
+    end
+
     def tag
       "Sequence"
     end

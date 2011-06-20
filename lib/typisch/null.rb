@@ -4,7 +4,7 @@ module Typisch
       "Null"
     end
 
-    def check_type(instance)
+    def shallow_check_type(instance)
       instance.nil?
     end
 

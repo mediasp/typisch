@@ -10,7 +10,7 @@ module Typisch
     # with a Date-like interface which you want to typecheck.
     VALID_IMPLEMENTATION_CLASSES = [::Date]
 
-    def check_type(instance)
+    def shallow_check_type(instance)
       case instance when *VALID_IMPLEMENTATION_CLASSES then true else false end
     end
   end
@@ -34,7 +34,7 @@ module Typisch
     # convert between them. Poor stdlib design :(
     VALID_IMPLEMENTATION_CLASSES = [::Time]
 
-    def check_type(instance)
+    def shallow_check_type(instance)
       case instance when *VALID_IMPLEMENTATION_CLASSES then true else false end
     end
   end

@@ -5,10 +5,18 @@ Easy ways to make supertypes / subtypes from existing types
 
 type-directed serialization (big win)
 
+non-stack-busting #inspect output for recursive types once canonicalised
+
+deserialization with typechecking
+
 type-checking
   - informative errors on failure
   - support type-checking Hash-like objects via [] property access
   - catch and wrap exceptions while getting data to type-check
+
+conveniences for the common case of union(foo, null)
+
+stop String type-checking as Sequence via its Enumerable implementation (which isn't even a sequence of characters, rather lines)
 
 compute canonicalised intersections
 

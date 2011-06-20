@@ -17,6 +17,10 @@ module Typisch
       @alternative_types.any? {|t| recursively_check_type[t, instance]}
     end
 
+    def shallow_check_type(instance)
+      @alternative_types.any? {|t| t.shallow_check_type(instance)}
+    end
+
     # Aside from sorting out uses of recursion, canonicalising unions is
     # the main non-trivial thing which canonicalisation does to the type
     # graph at present.

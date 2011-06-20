@@ -93,6 +93,12 @@ module Typisch
       def tag
         self.class.tag
       end
+
+      def check_type(instance)
+        shallow_check_type(instance)
+      end
+
+
     end
   end
 end

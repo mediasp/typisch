@@ -106,6 +106,13 @@ class Typisch::Type
     self
   end
 
+  # should check the type of this instance, but only 'one level deep', ie
+  # typically just check its type tag without recursively type-checking
+  # any child objects.
+  def shallow_check_type(instance)
+    raise NotImplementedError
+  end
+
 private
 
   # Inidividual type subclasses must implement this. If they need to

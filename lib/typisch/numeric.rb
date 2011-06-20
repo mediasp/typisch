@@ -72,9 +72,10 @@ module Typisch
       TOWER.index {|t| t.equal?(self)}
     end
 
-    def check_type(instance)
+    def shallow_check_type(instance)
       case instance when *@valid_implementation_classes then true else false end
     end
+    alias :check_type :shallow_check_type
 
     def subexpression_types
       []
