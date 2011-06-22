@@ -60,8 +60,8 @@ module Typisch
       end
     end
 
-    def to_s
-      @type
+    def to_s(*)
+      @name.inspect
     end
 
     def tag

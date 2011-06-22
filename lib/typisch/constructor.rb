@@ -53,10 +53,6 @@ module Typisch
       raise NotImplementedError
     end
 
-    def to_s
-      tag
-    end
-
     # these are here so as to implement a common interface with Type::Union
     def alternative_types
       [self]
@@ -98,7 +94,9 @@ module Typisch
         shallow_check_type(instance)
       end
 
-
+      def to_s(*)
+        @name.inspect
+      end
     end
   end
 end

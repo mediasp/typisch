@@ -8,9 +8,10 @@ module Typisch
   class Registry
     attr_reader :types_by_name
 
-    def initialize
+    def initialize(&block)
       @types_by_name = GLOBALS.dup
       @pending_canonicalization = {}
+      register(&block) if block
     end
 
     def [](name)
@@ -25,6 +26,7 @@ module Typisch
       else
         raise Error, "type already registered with name #{name.inspect}"
       end
+      type.send(:name=, name) unless type.name
       @types_by_name[name] = type
       @pending_canonicalization[name] = type
     end
@@ -33,6 +35,7 @@ module Typisch
     # (boolean, string, ...) which we want to be included in all registries
     GLOBALS = {}
     def self.register_global_type(name, type)
+      type.send(:name=, name) unless type.name
       GLOBALS[name] = type
     end
 
@@ -70,7 +73,8 @@ module Typisch
       # about how eachother canonicalize and don't duplicate work.
       canonicalizations = {}
       @pending_canonicalization.each do |name, type|
-        @types_by_name[name] = type.canonicalize(canonicalizations)
+        type = @types_by_name[name] = type.canonicalize(canonicalizations)
+        type.send(:name=, name) unless type.name
       end
       @pending_canonicalization = {}
     end
@@ -87,6 +91,14 @@ module Typisch
 
     def merge!(other)
       @types_by_name.merge!(other.types_by_name)
+    end
+
+    def to_s
+      pairs = @types_by_name.map do |n,t|
+        next if GLOBALS[n]
+        "r.register #{n.inspect}, #{t.to_s(0, '  ')}"
+      end.compact
+      "Typisch::Registry.new do |r|\n  #{pairs.join("\n  ")}\nend"
     end
   end
 
@@ -132,7 +144,7 @@ module Typisch
       target.instance_of?(klass)
     end
 
-    def to_s
+    def to_s(*)
       @name.inspect
     end
 

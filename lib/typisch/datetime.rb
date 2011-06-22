@@ -17,8 +17,8 @@ module Typisch
 
   class Type::Time < Type::Constructor::Singleton
     def self.tag; "Time"; end
-    Registry.register_global_type(:datetime, top_type)
     Registry.register_global_type(:time, top_type)
+    Registry.register_global_type(:datetime, top_type)
 
     # You could add your own to the list, if you have some alternative ruby implementation
     # with a Time-like interface which you want to typecheck here.

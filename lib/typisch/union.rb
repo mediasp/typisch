@@ -7,10 +7,6 @@ module Typisch
       @alternative_types = alternative_types
     end
 
-    def to_s
-      @alternative_types.join(' | ')
-    end
-
     def check_type(instance, &recursively_check_type)
       # this relies on the safe backtracking provided by the recursively_check_type
       # block passed in by the caller
@@ -77,6 +73,13 @@ module Typisch
 
       result
     end
+
+    def to_string(depth, indent)
+      next_indent = "#{indent}  "
+      types = @alternative_types.map {|t| t.to_s(depth+1, next_indent)}
+      "union(\n#{next_indent}#{types.join(",\n#{next_indent}")}\n#{indent})"
+    end
+
   end
 
   # The Nothing (or 'bottom') type is just an empty Union:
@@ -85,9 +88,7 @@ module Typisch
       super
     end
 
-    def to_s
-      "Nothing"
-    end
+    def to_s(*); @name.inspect; end
 
     INSTANCE = new
     class << self; private :new; end
@@ -101,9 +102,7 @@ module Typisch
       super(*Constructor::CONSTRUCTOR_TYPE_SUBCLASSES.map {|klass| klass.top_type(self)})
     end
 
-    def to_s
-      "Any"
-    end
+    def to_s(*); @name.inspect; end
 
     # skip some unnecessary work checking different alternatives, since we know everything
     # works here:

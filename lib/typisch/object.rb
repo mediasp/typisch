@@ -52,13 +52,11 @@ class Typisch::Type
       instance.is_a?(class_or_module)
     end
 
-    def to_s
-      pairs = @property_names_to_types.map {|n,t| "#{n}: #{t}"}
-      if @tag == "Object"
-        "{#{pairs.join(', ')}}"
-      else
-        "#{@tag} {#{pairs.join(', ')}}"
-      end
+    def to_string(depth, indent)
+      next_indent = "#{indent}  "
+      pairs = @property_names_to_types.map {|n,t| "#{n.inspect} => #{t.to_s(depth+1, "#{indent}  ")}"}
+      tag = @tag == "Object" ? '' : "#{@tag},"
+      "object(#{tag}\n#{next_indent}#{pairs.join(",\n#{next_indent}")}\n#{indent})"
     end
 
     def canonicalize(existing_canonicalizations={}, *)

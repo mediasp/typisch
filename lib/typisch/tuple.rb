@@ -61,8 +61,10 @@ class Typisch::Type
       "Tuple"
     end
 
-    def to_s
-      "(#{@types.join(', ')})"
+    def to_string(depth, indent)
+      next_indent = "#{indent}  "
+      types = @types.map {|t| t.to_s(depth+1, next_indent)}
+      "tuple(\n#{next_indent}#{types.join(",\n#{next_indent}")}\n#{indent})"
     end
 
     def canonicalize(existing_canonicalizations={}, *)

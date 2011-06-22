@@ -41,8 +41,8 @@ class Typisch::Type
 
     attr_reader :type
 
-    def to_s
-      "[#{@type}]"
+    def to_string(depth, indent)
+      "sequence(#{@type.to_s(depth+1, indent)})"
     end
 
     def canonicalize(existing_canonicalizations={}, *)

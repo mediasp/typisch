@@ -61,12 +61,25 @@ class Typisch::Type
 
 
   def inspect
-    "#<Type:#{object_id} #{to_s}>"
+    "#<Type: #{to_s}>"
   end
 
-  def to_s
+  def to_s(depth=0, indent='')
+    return @name.inspect if depth > 0 && @name
+    return "..." if depth > 5 # MAX_DEPTH
+    to_string(depth, indent)
+  end
+
+  def to_string(depth, indent)
     raise NotImplementedError
   end
+
+  attr_reader :name
+  def name=(name)
+    raise "name already set" if @name
+    @name = name
+  end
+  private :name=
 
   # For convenience. Type::Constructor will implement this as [self], whereas
   # Type::Union will implement it as its full list of alternative constructor types.
