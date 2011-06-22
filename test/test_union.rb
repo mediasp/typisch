@@ -219,7 +219,7 @@ describe "Union types" do
         ), union
       end
 
-      AbcDef = Struct.new(:abc, :def)
+      AbcDef = Class.new(OpenStruct)
 
       it "should type-check where the instance matches any clause of the union, even when type tags don't differ (this requires backtracking)" do
         union = Type::Union.new(
@@ -229,7 +229,7 @@ describe "Union types" do
 
         # this will test twice against the two clauses in order. the first will fail, and it'll backtrack;
         # the second will then succeed:
-        instance = AbcDef.new(nil, 123)
+        instance = AbcDef.new(:def => 123)
         assert_operator union, :===, instance
 
         # check that the first test didn't polute the state of the subtyper, ie that it
@@ -239,11 +239,11 @@ describe "Union types" do
         # need something a bit more tricksy to test this, see next test
 
         # check something works against the first clause too
-        assert_operator union, :===, AbcDef.new(123, nil)
+        assert_operator union, :===, AbcDef.new(:abc => 123)
         # and something which satisfies both clauses
-        assert_operator union, :===, AbcDef.new(123, 456)
+        assert_operator union, :===, AbcDef.new(:abc => 123, :def => 456)
 
-        refute_operator union, :===, AbcDef.new(nil, nil)
+        refute_operator union, :===, AbcDef.new
       end
 
       # this example would trip up the type checker didn't backtrack safely after eliminating the first clause
@@ -255,7 +255,7 @@ describe "Union types" do
         )
         instance = AbcDef.new
         instance.abc = instance
-        refute_operator union, :===, type
+        refute_operator union, :===, instance
       end
     end
 

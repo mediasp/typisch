@@ -1,6 +1,5 @@
 require 'test/common'
 require 'typisch/serialization'
-require 'ostruct'
 
 describe "JSONSerializer" do
 
