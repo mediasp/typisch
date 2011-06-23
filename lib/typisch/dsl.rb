@@ -80,13 +80,4 @@ module Typisch
     end
   end
 
-  class ::Module
-    def register_type(register_as_symbol = to_s.to_sym, in_registry = Typisch.global_registry, &block)
-      klass = self
-      in_registry.register do
-        register(register_as_symbol, :object, klass, &block)
-      end
-    end
-  end
-
 end

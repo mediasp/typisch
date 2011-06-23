@@ -5,8 +5,6 @@ Easy ways to make supertypes / subtypes from existing types
 
 type-directed serialization (big win)
 
-non-stack-busting #inspect output for recursive types once canonicalised
-
 deserialization with typechecking
 
 type-checking
@@ -20,6 +18,7 @@ stop String type-checking as Sequence via its Enumerable implementation (which i
 
 compute canonicalised intersections
 
+either: consider ditching untagged unions altogether, or,
 an optional further lossy canonical form for unions where only structural features of all terms in the union are preserved
 
 remove vestiges of 'tag' as a first-class concept, and make Object accept a ruby class/module directly not a string

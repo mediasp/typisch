@@ -24,3 +24,5 @@ require 'typisch/subtyping'
 require 'typisch/type_checking'
 require 'typisch/poset_algorithms'
 require 'typisch/errors'
+
+require 'typisch/typed'
