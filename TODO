@@ -11,6 +11,7 @@ type-checking
   - informative errors on failure
   - support type-checking Hash-like objects via [] property access
   - catch and wrap exceptions while getting data to type-check
+  - ability to truncate a type to a certain depth as a nicer more general way to do 'type-check this to depth x' rather than the more ad-hoc shallow_type_check stuff
 
 conveniences for the common case of union(foo, null)
 
