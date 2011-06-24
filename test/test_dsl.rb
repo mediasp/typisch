@@ -21,6 +21,9 @@ describe "Registry#register / DSLContext" do
         property :name, :string
         property :age,  :integer
         property :books, sequence(:book)
+        property(:favourite_cheese, :object) do
+          property :smelliness, :real
+        end
       end
     end
 
@@ -41,6 +44,8 @@ describe "Registry#register / DSLContext" do
     assert_instance_of Type::String, author[:name]
     assert_instance_of Type::Numeric, author[:age]
     assert_instance_of Type::Sequence, author[:books]
+    assert_instance_of Type::Object, author[:favourite_cheese]
+    assert_instance_of Type::Numeric, author[:favourite_cheese][:smelliness]
 
     # todo: make these assert_same once we have type graph canonicalization in place
     assert_equal book, author[:books].type

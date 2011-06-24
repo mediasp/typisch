@@ -37,7 +37,10 @@ module Typisch
       when ::Module then [klass_or_properties, properties]
       end
       properties ||= (block && ObjectContext.capture(self, &block)) || {}
-      properties.keys.each {|k| properties[k] = type(properties[k])}
+      properties.keys.each do |k|
+        type_args, type_block_arg = properties[k]
+        properties[k] = type(*type_args, &type_block_arg)
+      end
       Type::Object.new(klass.to_s, properties)
     end
 
@@ -59,9 +62,9 @@ module Typisch
         @properties = {}
       end
 
-      def property(name, type)
+      def property(name, *type_args, &type_block_arg)
         raise Error, "property #{name.inspect} declared twice" if @properties[name]
-        @properties[name] = type
+        @properties[name] = [type_args, type_block_arg]
       end
 
       def method_missing(name, *args, &block)
