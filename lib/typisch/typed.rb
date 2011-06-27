@@ -30,11 +30,12 @@ module Typisch
 
     def type_check_property(name, full_check=false)
       type = self.class.type_of(name) or raise NameError, "no typed property #{name} in #{self.class}"
+      value = send(name)
       if full_check
-        type === send(name)
+        type === send(value)
       else
-        type.shallow_check_type(send(name))
-      end or raise TypeError, "property #{name} was expected to be of type #{type}"
+        type.shallow_check_type(value)
+      end or raise TypeError, "property #{name} was expected to be of type #{type}, got instance of #{value.class}"
     end
 
     module ClassMethods
