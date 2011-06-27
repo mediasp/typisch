@@ -39,7 +39,11 @@ module Typisch
 
     module ClassMethods
       def type
-        @type or raise "Forgot to register_type for Typisch::Typed class"
+        @type ||= if @type_name
+          @type_registry[@type_name]
+        else
+          raise "Forgot to register_type for Typisch::Typed class"
+        end
       end
 
       def type_of(property_name)
@@ -48,14 +52,15 @@ module Typisch
 
     private
       def register_type(in_registry = Typisch.global_registry, register_as_symbol = to_s.to_sym, &block)
-        raise "Type already registered for #{self}" if @type
+        raise "Type already registered for #{self}" if @type_name
         klass = self; type = nil
         in_registry.register do
           type = object(klass, &block)
           register(register_as_symbol, type)
         end
-        @type = type
-        @type.property_names_to_types.map do |name, type|
+        @type_name = register_as_symbol
+        @type_registry = in_registry
+        type.property_names_to_types.map do |name, type|
           # watch out: type may be a named placeholder at this point, so
           # don't try poking at it too hard
           define_typed_attribute(name)

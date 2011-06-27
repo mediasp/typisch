@@ -164,7 +164,7 @@ module Typisch
       result
     end
 
-    undef :alternative_types, :check_type, :subexpression_types # let us proxy these through
+    undef :alternative_types, :check_type, :shallow_check_type, :subexpression_types # let us proxy these through
 
     def method_missing(name, *args, &block)
       target.respond_to?(name) ? target.send(name, *args, &block) : super
