@@ -55,7 +55,8 @@ module Typisch
 
       # now, we see what's the smallest subset of these types whose union is equal to that
       # of the overall set?
-      types = Typisch.find_minimal_set_of_upper_bounds(*types)
+      # FIXME: breaks in presence of recursion, disabled pending rethink of union canonicalisation
+      #types = Typisch.find_minimal_set_of_upper_bounds(*types)
 
       # finally can initialize the union which we allocated earlier:
       result.send(:initialize, *types)

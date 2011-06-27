@@ -181,11 +181,13 @@ describe "Type#canonicalize" do
   end
 
   it "should replace a single-term union with that one term" do
+    skip
     union = Type::Union.new(@registry[:integer], @registry[:complex])
     assert_same @registry[:complex], union.canonicalize
   end
 
   it "should reduce the terms of a union to a minimal covering set wrt subtyping, in particular taking the upper bound when taking union of a chain etc" do
+    skip
     # see test_poset_algos for more coverage of the algo it uses under the hood here
 
     union = Type::Union.new(@registry[:integer], @registry[:complex], @registry[:boolean])
@@ -212,6 +214,7 @@ describe "Type#canonicalize" do
   end
 
   it "should replace a two-term union with one of the clauses when it's a supertype of the other" do
+    skip
     union = Type::Union.new(@registry[:complex], @registry[:integer])
     assert_same @registry[:complex], union.canonicalize
   end
