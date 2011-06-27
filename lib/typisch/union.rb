@@ -91,6 +91,8 @@ module Typisch
 
     def to_s(*); @name.inspect; end
 
+    def canonicalize(*); self; end
+
     INSTANCE = new
     class << self; private :new; end
     Registry.register_global_type(:nothing, INSTANCE)
@@ -104,6 +106,8 @@ module Typisch
     end
 
     def to_s(*); @name.inspect; end
+
+    def canonicalize(*); self; end
 
     # skip some unnecessary work checking different alternatives, since we know everything
     # works here:
