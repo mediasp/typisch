@@ -47,8 +47,11 @@ module Typisch
       end
 
       def type_of(property_name)
-        @type[property_name]
+        type[property_name]
       end
+
+    protected
+      attr_reader :type_name, :type_registry
 
     private
       def register_type(in_registry = Typisch.global_registry, register_as_symbol = to_s.to_sym, &block)
@@ -63,6 +66,24 @@ module Typisch
         type.property_names_to_types.map do |name, type|
           # watch out: type may be a named placeholder at this point, so
           # don't try poking at it too hard
+          define_typed_attribute(name)
+          alias_method(:"#{name}?", name) if Type::Boolean === type
+        end
+      end
+
+      def register_subtype(in_registry = Typisch.global_registry, register_as_symbol = to_s.to_sym, &block)
+        raise "Type already registered for #{self}" if @type_name
+        raise "register_subtype: superclass was not typed" unless superclass < Typed
+        supertype = superclass.type_registry[superclass.type_name] # avoid prematurely memoizing .type on the superclass
+        klass = self; type = nil
+        in_registry.register do
+          type = object_subtype(supertype, klass, &block)
+          register(register_as_symbol, type)
+        end
+        @type_name = register_as_symbol
+        @type_registry = in_registry
+        type.property_names_to_types.map do |name, type|
+          next if supertype.property_names_to_types.has_key?(name)
           define_typed_attribute(name)
           alias_method(:"#{name}?", name) if Type::Boolean === type
         end

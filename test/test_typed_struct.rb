@@ -111,4 +111,16 @@ describe "Typed" do
     assert_equal false, abc.prop1?
   end
 
+  class Def < Abc
+    register_subtype do
+      property :prop3, :string
+    end
+  end
+
+  it "should let you register a subtype for a subclass of a typed class" do
+    assert Def.type < Abc.type
+    assert Def.type_of(:prop3)
+    assert_nil Abc.type_of(:prop3)
+  end
+
 end

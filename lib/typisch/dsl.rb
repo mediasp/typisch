@@ -36,12 +36,20 @@ module Typisch
       when ::Hash, ::NilClass then [::Object, klass_or_properties]
       when ::Module then [klass_or_properties, properties]
       end
-      properties ||= (block && ObjectContext.capture(self, &block)) || {}
+      properties ||= {}
+      properties.merge!(ObjectContext.capture(self, &block)) if block
       properties.keys.each do |k|
         type_args, type_block_arg = properties[k]
         properties[k] = type(*type_args, &type_block_arg)
       end
       Type::Object.new(klass.to_s, properties)
+    end
+
+    def object_subtype(supertype, klass=nil, properties={}, &block)
+      supertype = type(supertype)
+      klass ||= supertype.class_or_module
+      properties = supertype.property_names_to_types.merge(properties)
+      object(klass, properties, &block)
     end
 
     def union(*types)
