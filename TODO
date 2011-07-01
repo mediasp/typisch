@@ -14,6 +14,8 @@ type-checking
   - ability to truncate a type to a certain depth as a nicer more general way to do 'type-check this to depth x' rather than the more ad-hoc shallow_type_check stuff
 
 conveniences for the common case of union(foo, null)
+ - nullable(:string)
+ - .without_null
 
 stop String type-checking as Sequence via its Enumerable implementation (which isn't even a sequence of characters, rather lines)
 
@@ -23,3 +25,7 @@ either: consider ditching untagged unions altogether, or,
 an optional further lossy canonical form for unions where only structural features of all terms in the union are preserved
 
 remove vestiges of 'tag' as a first-class concept, and make Object accept a ruby class/module directly not a string
+
+add question_mark? method aliasing for union(:boolean, :null) as well as just boolean
+
+better convenience methods for traversing the type graph and getting info about it

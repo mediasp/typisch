@@ -66,7 +66,7 @@ class Typisch::Type
 
   def to_s(depth=0, indent='')
     return @name.inspect if depth > 0 && @name
-    return "..." if depth > 5 # MAX_DEPTH
+    return "..." if depth > 3 # MAX_DEPTH
     to_string(depth, indent)
   end
 

@@ -93,7 +93,7 @@ module Typisch
       # override this if you want your own funky attributes instead of a vanilla attr_accessor
       # for any typed properties.
       def define_typed_attribute(name)
-        attr_accessor(name)
+        attr_accessor(name) unless method_defined?(name)
       end
     end
   end
