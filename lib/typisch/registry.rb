@@ -18,7 +18,7 @@ module Typisch
       @types_by_name[name] ||= Type::NamedPlaceholder.new(name, self)
     end
 
-    def []=(name, type)
+    def register_type(name, type, &callback_on_canonicalization)
       case @types_by_name[name]
       when Type::NamedPlaceholder
         @types_by_name[name].send(:target=, type)
@@ -28,8 +28,9 @@ module Typisch
       end
       type.send(:name=, name) unless type.name
       @types_by_name[name] = type
-      @pending_canonicalization[name] = type
+      @pending_canonicalization[name] = [type, callback_on_canonicalization]
     end
+    alias :[]= :register_type
 
     # While loading, we'll register various types in this hash of types
     # (boolean, string, ...) which we want to be included in all registries
@@ -72,9 +73,10 @@ module Typisch
       # between calls, so that the different registered types know
       # about how eachother canonicalize and don't duplicate work.
       canonicalizations = {}
-      @pending_canonicalization.each do |name, type|
+      @pending_canonicalization.each do |name, (type, callback)|
         type = @types_by_name[name] = type.canonicalize(canonicalizations)
         type.send(:name=, name) unless type.name
+        callback.call(type) if callback
       end
       @pending_canonicalization = {}
     end

@@ -40,60 +40,55 @@ module Typisch
 
     module ClassMethods
       def type
-        @type ||= if @type_name
-          @type_registry[@type_name]
-        else
-          raise "Forgot to register_type for Typisch::Typed class"
-        end
+        @type || raise("Forgot to register_type for Typisch::Typed class, or attempting to get type before registered type graph has been canonicalized")
       end
 
       def type_of(property_name)
         type[property_name]
       end
 
-    protected
-      attr_reader :type_name, :type_registry
-
     private
       def register_type(in_registry = Typisch.global_registry, register_as_symbol = to_s.to_sym, &block)
-        raise "Type already registered for #{self}" if @type_name
-        klass = self; type = nil
+        raise "Type already registered for #{self}" if @pending_type || @type
+        callback = method(:type=); klass = self; type = nil
         in_registry.register do
           type = object(klass, &block)
-          register(register_as_symbol, type)
+          in_registry.register_type(register_as_symbol, type, &callback)
         end
-        @type_name = register_as_symbol
-        @type_registry = in_registry
+        @pending_type = type
+      end
+
+      def pending_type; @pending_type || @type; end
+
+      def type=(canonicalized_type)
+        @pending_type = nil
+        @type = canonicalized_type
+        type_available
+      end
+
+      # Called once the type which you registered is available in a fully canonicalized form
+      # (so eg any forward declarations to types defined in other still-to-be-required classes,
+      # will have been resolved at this point).
+      #
+      # By default declares an attr_accessor for each property, and aliases it with a ? on the
+      # end if it's a boolean property. Override if you want to do something different.
+      def type_available
         type.property_names_to_types.map do |name, type|
-          # watch out: type may be a named placeholder at this point, so
-          # don't try poking at it too hard
-          define_typed_attribute(name)
-          alias_method(:"#{name}?", name) if Type::Boolean === type
+          attr_accessor(name) unless method_defined?(name)
+          alias_method(:"#{name}?", name) if type.excluding_null.is_a?(Type::Boolean)
         end
       end
 
       def register_subtype(in_registry = Typisch.global_registry, register_as_symbol = to_s.to_sym, &block)
-        raise "Type already registered for #{self}" if @type_name
+        raise "Type already registered for #{self}" if @pending_type || @type
         raise "register_subtype: superclass was not typed" unless superclass < Typed
-        supertype = superclass.type_registry[superclass.type_name] # avoid prematurely memoizing .type on the superclass
-        klass = self; type = nil
+        supertype = superclass.send(:pending_type)
+        callback = method(:type=); klass = self; type = nil
         in_registry.register do
           type = object_subtype(supertype, klass, &block)
-          register(register_as_symbol, type)
+          in_registry.register_type(register_as_symbol, type, &callback)
         end
-        @type_name = register_as_symbol
-        @type_registry = in_registry
-        type.property_names_to_types.map do |name, type|
-          next if supertype.property_names_to_types.has_key?(name)
-          define_typed_attribute(name)
-          alias_method(:"#{name}?", name) if Type::Boolean === type
-        end
-      end
-
-      # override this if you want your own funky attributes instead of a vanilla attr_accessor
-      # for any typed properties.
-      def define_typed_attribute(name)
-        attr_accessor(name) unless method_defined?(name)
+        @pending_type = type
       end
     end
   end

@@ -54,7 +54,7 @@ describe "Typed" do
 
   class Abc < TypedStruct
     register_type do
-      property :prop1, :boolean
+      property :prop1, nullable(:boolean)
       property :prop2, :sequence, :integer
     end
   end
@@ -102,7 +102,7 @@ describe "Typed" do
     assert_equal [1,2,3], abc.prop2
   end
 
-  it "should alias boolean attributes with a question_marked? getter" do
+  it "should alias boolean or nullable boolean attributes with a question_marked? getter" do
     abc = Abc.new
     assert_respond_to abc, :prop1?
     abc.prop1 = true
