@@ -49,6 +49,7 @@ class Typisch::Type
       result = existing_canonicalizations[self] and return result
       result = existing_canonicalizations[self] = self.class.allocate
       result.send(:initialize, @type.canonicalize(existing_canonicalizations))
+      result.send(:annotations=, @annotations) if @annotations
       result
     end
 

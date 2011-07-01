@@ -74,9 +74,9 @@ module Typisch
       # about how eachother canonicalize and don't duplicate work.
       canonicalizations = {}
       @pending_canonicalization.each do |name, (type, callback)|
-        type = @types_by_name[name] = type.canonicalize(canonicalizations)
-        type.send(:name=, name) unless type.name
-        callback.call(type) if callback
+        canonicalized_type = @types_by_name[name] = type.canonicalize(canonicalizations)
+        canonicalized_type.send(:name=, name) unless canonicalized_type.name
+        callback.call(canonicalized_type) if callback
       end
       @pending_canonicalization = {}
     end
@@ -168,7 +168,7 @@ module Typisch
 
     # let us proxy these through
     undef :alternative_types, :check_type, :shallow_check_type, :subexpression_types
-    undef :excluding_null
+    undef :excluding_null, :annotations
 
     def method_missing(name, *args, &block)
       target.respond_to?(name) ? target.send(name, *args, &block) : super

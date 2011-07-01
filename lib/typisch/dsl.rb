@@ -5,7 +5,26 @@ module Typisch
     end
 
     def register(name, *type_args, &type_block_arg)
-      registry[name] = type(*type_args, &type_block_arg)
+      result = registry[name] = type(*type_args, &type_block_arg)
+      if @pending_annotations
+        result.annotations.merge!(@pending_annotations)
+        @pending_annotations = nil
+      end
+      result
+    end
+
+    # annotations apply to the next register'd type.
+    #
+    # annotate "Some description", :some_other => 'annotations'
+    # annotate :description => "Some description", :some_other => 'annotations'
+    def annotate(description_or_options, options=nil)
+      if description_or_options.is_a?(::String)
+        options ||= {}; options[:description] = description_or_options
+      else
+        options = description_or_options
+      end
+      @pending_annotations ||= {}
+      @pending_annotations.merge!(options)
     end
 
     def type(arg, *more_args, &block_arg)
@@ -37,12 +56,20 @@ module Typisch
       when ::Module then [klass_or_properties, properties]
       end
       properties ||= {}
-      properties.merge!(ObjectContext.capture(self, &block)) if block
+      if block
+        object_context = ObjectContext.new(self)
+        object_context.instance_eval(&block)
+        properties.merge!(object_context.properties)
+      end
       properties.keys.each do |k|
         type_args, type_block_arg = properties[k]
         properties[k] = type(*type_args, &type_block_arg)
       end
-      Type::Object.new(klass.to_s, properties)
+      type = Type::Object.new(klass.to_s, properties)
+      if block && (prop_annot = object_context.property_annotations)
+        type.annotations[:properties] = prop_annot
+      end
+      type
     end
 
     def object_subtype(supertype, klass=nil, properties={}, &block)
@@ -61,22 +88,35 @@ module Typisch
     end
 
     class ObjectContext
-      attr_reader :properties
-
-      def self.capture(parent_context, &block)
-        x = new(parent_context)
-        x.instance_eval(&block)
-        x.properties
-      end
+      attr_reader :properties, :property_annotations
 
       def initialize(parent_context)
         @parent_context = parent_context
         @properties = {}
       end
 
+      # property annotations apply to the next declared property.
+      #
+      # annotate "Some description", :some_other => 'annotations'
+      # annotate :description => "Some description", :some_other => 'annotations'
+      def annotate(description_or_options, options=nil)
+        if description_or_options.is_a?(::String)
+          options ||= {}; options[:description] = description_or_options
+        else
+          options = description_or_options
+        end
+        @pending_annotations ||= {}
+        @pending_annotations.merge!(options)
+      end
+
       def property(name, *type_args, &type_block_arg)
         raise Error, "property #{name.inspect} declared twice" if @properties[name]
         @properties[name] = [type_args, type_block_arg]
+        if @pending_annotations
+          @property_annotations ||= {}
+          @property_annotations[name] = @pending_annotations
+          @pending_annotations = nil
+        end
       end
 
       def method_missing(name, *args, &block)

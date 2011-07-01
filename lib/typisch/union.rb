@@ -65,6 +65,7 @@ module Typisch
 
       # finally can initialize the union which we allocated earlier:
       result.send(:initialize, *types)
+      result.send(:annotations=, @annotations) if @annotations
 
       # hang on though - if there's only one term in the union, we'd actually rather
       # canonicalise to that one term, without a redundant union wrapper around it.

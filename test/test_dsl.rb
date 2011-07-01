@@ -14,18 +14,27 @@ describe "Registry#register / DSLContext" do
     @registry.register do
       register :alias_for_boolean, :boolean
 
+      annotate "An integer or null", :some_other => 'annotation'
+      annotate :and_another => 'annotation'
       register :nullable_integer, nullable(:integer)
 
+      annotate :description => "A thing which people read", :some_other => 'annotation'
       register :book, :object do
         property :title, :string
         property :subtitle, union(:string, :null)
         property :author, :author
       end
 
+      annotate "Someone who writes a thing which people read"
       register :author, :object, AnAuthor do
         property :name, :string
+
+        annotate "How old someone is"
         property :age,  :integer
+
+        annotate :description => "The books they wrote", :special => 'special'
         property :books, sequence(:book)
+
         property(:favourite_cheese, :object) do
           property :smelliness, :real
         end
@@ -37,6 +46,9 @@ describe "Registry#register / DSLContext" do
     end
 
     assert_instance_of Type::Boolean, @registry[:alias_for_boolean]
+    assert_equal "An integer or null", @registry[:nullable_integer].annotations[:description]
+    assert_equal "annotation", @registry[:nullable_integer].annotations[:some_other]
+    assert_equal "annotation", @registry[:nullable_integer].annotations[:and_another]
 
     assert_instance_of Type::Union, @registry[:nullable_integer]
     assert @registry[:nullable_integer].alternative_types.include?(@registry[:null])
@@ -49,8 +61,12 @@ describe "Registry#register / DSLContext" do
     assert_instance_of Type::String, book[:subtitle].alternative_types[0]
     assert_instance_of Type::Null,   book[:subtitle].alternative_types[1]
 
+    assert_equal({:description => "A thing which people read", :some_other => 'annotation'}, book.annotations)
+
     assert_same book[:author], author
     assert_same author, book[:author]
+
+    assert_equal("Someone who writes a thing which people read", author.annotations[:description])
 
 
     assert_equal AnAuthor, author.class_or_module
@@ -59,6 +75,9 @@ describe "Registry#register / DSLContext" do
     assert_instance_of Type::Sequence, author[:books]
     assert_instance_of Type::Object, author[:favourite_cheese]
     assert_instance_of Type::Numeric, author[:favourite_cheese][:smelliness]
+
+    assert_equal({:description => "How old someone is"}, author.property_annotations(:age))
+    assert_equal({:description => "The books they wrote", :special => 'special'}, author.property_annotations(:books))
 
     assert_same book, author[:books].type
     assert_same author[:books].type, book

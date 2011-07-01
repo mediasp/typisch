@@ -67,7 +67,12 @@ class Typisch::Type
         property_names_to_types[name] = type.canonicalize(existing_canonicalizations)
       end
       result.send(:initialize, @tag, property_names_to_types)
+      result.send(:annotations=, @annotations) if @annotations
       result
+    end
+
+    def property_annotations(property_name)
+      (annotations[:properties] ||= {})[property_name] ||= {}
     end
   end
 end

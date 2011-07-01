@@ -81,6 +81,18 @@ class Typisch::Type
   end
   private :name=
 
+  # types may be annotated with a hash of arbitrary stuff.
+  # could use this to document them, or to add instructions for
+  # other tools which do type-directed metaprogramming.
+
+  def annotations
+    @annotations ||= {}
+  end
+
+  def annotations=(annotations)
+    @annotations = annotations
+  end
+
   # For convenience. Type::Constructor will implement this as [self], whereas
   # Type::Union will implement it as its full list of alternative constructor types.
   def alternative_types
