@@ -126,6 +126,12 @@ class Typisch::Type
     raise NotImplementedError
   end
 
+  # returns a version of this type which excludes null.
+  # generally will be self, except when a union type which includes null.
+  def excluding_null
+    self
+  end
+
 private
 
   # Inidividual type subclasses must implement this. If they need to

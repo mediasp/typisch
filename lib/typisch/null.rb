@@ -8,6 +8,10 @@ module Typisch
       instance.nil?
     end
 
+    def excluding_null
+      Type::Nothing::INSTANCE
+    end
+
     Registry.register_global_type(:null, top_type)
   end
 end

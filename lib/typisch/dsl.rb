@@ -56,6 +56,10 @@ module Typisch
       Type::Union.new(*types.map {|t| type(t)})
     end
 
+    def nullable(t)
+      union(type(t), :null)
+    end
+
     class ObjectContext
       attr_reader :properties
 

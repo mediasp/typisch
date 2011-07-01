@@ -14,6 +14,8 @@ describe "Registry#register / DSLContext" do
     @registry.register do
       register :alias_for_boolean, :boolean
 
+      register :nullable_integer, nullable(:integer)
+
       register :book, :object do
         property :title, :string
         property :subtitle, union(:string, :null)
@@ -35,6 +37,10 @@ describe "Registry#register / DSLContext" do
     end
 
     assert_instance_of Type::Boolean, @registry[:alias_for_boolean]
+
+    assert_instance_of Type::Union, @registry[:nullable_integer]
+    assert @registry[:nullable_integer].alternative_types.include?(@registry[:null])
+    assert @registry[:nullable_integer].alternative_types.include?(@registry[:integer])
 
     book, author, special_author = @registry[:book], @registry[:author], @registry[:special_author]
     assert_instance_of Type::Object, book

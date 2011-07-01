@@ -17,6 +17,11 @@ module Typisch
       @alternative_types.any? {|t| t.shallow_check_type(instance)}
     end
 
+    def excluding_null
+      types = @alternative_types.reject {|t| Type::Null === t}
+      types.length == 1 ? types.first : Type::Union.new(*types)
+    end
+
     # Aside from sorting out uses of recursion, canonicalising unions is
     # the main non-trivial thing which canonicalisation does to the type
     # graph at present.

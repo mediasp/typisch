@@ -13,9 +13,10 @@ type-checking
   - catch and wrap exceptions while getting data to type-check
   - ability to truncate a type to a certain depth as a nicer more general way to do 'type-check this to depth x' rather than the more ad-hoc shallow_type_check stuff
 
-conveniences for the common case of union(foo, null)
- - nullable(:string)
- - .without_null
+refinements of String, Numeric etc
+  - length limits
+  - integer ranges
+  - enums - sets of allowed values
 
 stop String type-checking as Sequence via its Enumerable implementation (which isn't even a sequence of characters, rather lines)
 
