@@ -20,6 +20,10 @@ module Typisch
       klass.send(:extend, ClassMethods)
     end
 
+    def type
+      self.class.type
+    end
+
     def type_check(full_check=false)
       if full_check
         self.class.type === self or raise TypeError, "failed to type-check"
