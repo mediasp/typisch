@@ -40,8 +40,31 @@ describe "Registry#register / DSLContext" do
         end
       end
 
-      register :special_author, :object_subtype, :author, ASpecialAuthor do
+      register :special_author, :derived_from, :author, ASpecialAuthor do
+        derive_all_properties
         property :specialness, :integer
+      end
+
+      register :derived_author, :derived_from, :author do
+        # this lets you derive multiple properties from the original type in one go
+        # (but not customize them):
+        derive_properties :name, :age
+
+        # picking a derived type for the derived property works with sequence types too
+        # - we want the books sequence, but with only the 'title' property on the books within it:
+        derive_property :books do
+          derive_property :title
+        end
+      end
+
+      register :derived_book, :derived_from, :book do
+        derive_property :title
+        # recursively pick a derived version of author for the author property.
+        # note we can't do this until after :author is registered; for now there
+        # is a hard define-time dependency when using the derived_from DSL.
+        derive_property :author do
+          derive_property :age
+        end
       end
     end
 
@@ -88,7 +111,20 @@ describe "Registry#register / DSLContext" do
 
     assert_instance_of Type::Numeric, special_author[:specialness]
     assert_nil author[:specialness]
-
     assert special_author < author
+
+
+    derived_book = @registry[:derived_book]
+    assert_instance_of Type::Object, derived_book
+    assert_equal [:author, :title], derived_book.property_names.sort_by(&:to_s)
+    assert_same derived_book[:title], book[:title]
+    assert_equal [:age], derived_book[:author].property_names
+    assert_equal AnAuthor, derived_book[:author].class_or_module
+
+    derived_author = @registry[:derived_author]
+    assert_instance_of Type::Object, derived_author
+    assert_equal AnAuthor, derived_author.class_or_module
+    assert_equal [:age, :books, :name], derived_author.property_names.sort_by(&:to_s)
+    assert_equal [:title], derived_author[:books].type.property_names
   end
 end

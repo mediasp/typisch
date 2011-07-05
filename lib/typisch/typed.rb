@@ -89,7 +89,10 @@ module Typisch
         supertype = superclass.send(:pending_type)
         callback = method(:type=); klass = self; type = nil
         in_registry.register do
-          type = object_subtype(supertype, klass, &block)
+          type = derived_from(supertype, klass) do
+            instance_eval(&block)
+            derive_all_properties
+          end
           in_registry.register_type(register_as_symbol, type, &callback)
         end
         @pending_type = type

@@ -1,4 +1,11 @@
 module Typisch
+
+  # Apologies this is a bit messy. Should probably do a bit of a tidy-up
+  # once the dust has settled around the DSL syntax.
+  #
+  # It's a layer ontop of the core type model though - could be worse, it
+  # could be horribly intertwined with the model itself :)
+
   module DSL
     def registry
       raise NotImplementedError
@@ -50,14 +57,27 @@ module Typisch
       Type::Tuple.new(*types.map {|t| type(t)})
     end
 
-    def object(klass_or_properties=nil, properties=nil, &block)
-      klass, properties = case klass_or_properties
-      when ::Hash, ::NilClass then [::Object, klass_or_properties]
-      when ::Module then [klass_or_properties, properties]
+    def object(*args, &block)
+      klass, properties = _normalize_object_args(::Object, *args)
+      _object(klass, properties, &block)
+    end
+
+    def _normalize_object_args(default_class, klass_or_properties=nil, properties=nil)
+      case klass_or_properties
+      when ::Hash     then [default_class, klass_or_properties]
+      when ::NilClass then [default_class, {}]
+      when ::Module   then [klass_or_properties, properties || {}]
       end
-      properties ||= {}
+    end
+
+    # back-end for object, which takes args in a normalized format
+    def _object(klass, properties, derive_from=nil, &block)
       if block
-        object_context = ObjectContext.new(self)
+        object_context = if derive_from
+          DerivedObjectContext.new(self, derive_from)
+        else
+          ObjectContext.new(self)
+        end
         object_context.instance_eval(&block)
         properties.merge!(object_context.properties)
       end
@@ -72,19 +92,34 @@ module Typisch
       type
     end
 
-    def object_subtype(supertype, klass=nil, properties={}, &block)
-      supertype = type(supertype)
-      klass ||= supertype.class_or_module
-      properties = supertype.property_names_to_types.merge(properties)
-      object(klass, properties, &block)
-    end
-
     def union(*types)
       Type::Union.new(*types.map {|t| type(t)})
     end
 
     def nullable(t)
       union(type(t), :null)
+    end
+
+    def derived_from(original_type, *args, &block_arg)
+      original_type = type(original_type).target
+      if args.empty? && !block_arg
+        original_type
+      else
+        case original_type
+        when Type::Object
+          klass, properties = _normalize_object_args(original_type.class_or_module, *args)
+          _object(klass, properties, original_type, &block_arg)
+        when Type::Sequence
+          Type::Sequence.new(derived_from(original_type.type, *args, &block_arg))
+        when Type::Union
+          non_null = original_type.excluding_null
+          raise "DSL doesn't support deriving from union types (except simple unions with null)" if Type::Union === non_null
+          nullable(derived_from(non_null, *args, &block_arg))
+        else
+          raise "DSL doesn't support deriving from #{original_type.class} types" if args.length > 0 || block_arg
+          original_type
+        end
+      end
     end
 
     class ObjectContext
@@ -121,6 +156,32 @@ module Typisch
 
       def method_missing(name, *args, &block)
         @parent_context.respond_to?(name) ? @parent_context.send(name, *args, &block) : super
+      end
+    end
+
+    class DerivedObjectContext < ObjectContext
+      def initialize(c, original_object_type)
+        super(c)
+        @original_object_type = original_object_type
+      end
+
+      def derive_properties(*names)
+        names.each {|n| derive_property(n)}
+      end
+
+      # use a property from the original object type being derived from
+      def derive_property(name, *derive_args, &derive_block)
+        type = @original_object_type[name] or raise "use_property: no such property #{name.inspect} on the original type"
+        derived_type = derived_from(type, *derive_args, &derive_block)
+        property name, derived_type
+      end
+
+      # derives all properties from the original type which haven't already been derived.
+      # this is done for you by Typisch::Typed::ClassMethods#register_subtype.
+      def derive_all_properties
+        @original_object_type.property_names_to_types.each do |name, type|
+          property(name, type) unless @properties[name]
+        end
       end
     end
   end

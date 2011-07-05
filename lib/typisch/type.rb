@@ -64,6 +64,9 @@ class Typisch::Type
     "#<Type: #{to_s}>"
   end
 
+  # overridden on the Placeholder proxy wrapper, otherwise points at self
+  def target; self; end
+
   def to_s(depth=0, indent='')
     return @name.inspect if depth > 0 && @name
     return "..." if depth > 3 # MAX_DEPTH
