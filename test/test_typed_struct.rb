@@ -37,17 +37,17 @@ describe "Typed" do
     assert_equal foo_type, bar_type[:foo]
   end
 
-  it "should let you specify what to register it as and a particular registry in which to do so" do
+  it "should let you specify which registry to register it in" do
     class Baz
       include Typed
       SPECIAL_REGISTRY = Typisch::Registry.new
 
-      register_type(SPECIAL_REGISTRY, :type_of_baz) do
+      register_type(SPECIAL_REGISTRY) do
         property :title, :string
       end
     end
 
-    baz_type = Baz::SPECIAL_REGISTRY[:type_of_baz]
+    baz_type = Baz::SPECIAL_REGISTRY[:Baz]
     assert_instance_of Type::Object, baz_type
     assert_equal Baz, baz_type.class_or_module
   end

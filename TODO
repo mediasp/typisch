@@ -26,3 +26,5 @@ an optional further lossy canonical form for unions where only structural featur
 remove vestiges of 'tag' as a first-class concept, and make Object accept a ruby class/module directly not a string
 
 better convenience methods for traversing the type graph and getting info about it
+
+ensure annotations play nice with derived types

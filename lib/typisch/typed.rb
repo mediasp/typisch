@@ -52,11 +52,12 @@ module Typisch
       end
 
     private
-      def register_type(in_registry = Typisch.global_registry, register_as_symbol = to_s.to_sym, &block)
+      def register_type(in_registry = Typisch.global_registry, derive_from_type=nil, &block)
         raise "Type already registered for #{self}" if @pending_type || @type
+        register_as_symbol = to_s.to_sym
         callback = method(:type=); klass = self; type = nil
         in_registry.register do
-          type = object(klass, &block)
+          type = _object(klass, {}, derive_from_type, &block)
           in_registry.register_type(register_as_symbol, type, &callback)
         end
         @pending_type = type
@@ -83,9 +84,10 @@ module Typisch
         end
       end
 
-      def register_subtype(in_registry = Typisch.global_registry, register_as_symbol = to_s.to_sym, &block)
+      def register_subtype(in_registry = Typisch.global_registry, &block)
         raise "Type already registered for #{self}" if @pending_type || @type
         raise "register_subtype: superclass was not typed" unless superclass < Typed
+        register_as_symbol = to_s.to_sym
         supertype = superclass.send(:pending_type)
         callback = method(:type=); klass = self; type = nil
         in_registry.register do
