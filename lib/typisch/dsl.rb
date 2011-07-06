@@ -101,10 +101,10 @@ module Typisch
     end
 
     def derived_from(original_type, *args, &block_arg)
-      original_type = type(original_type).target
       if args.empty? && !block_arg
         original_type
       else
+        original_type = type(original_type).target
         case original_type
         when Type::Object
           klass, properties = _normalize_object_args(original_type.class_or_module, *args)
@@ -180,6 +180,13 @@ module Typisch
       # this is done for you by Typisch::Typed::ClassMethods#register_subtype.
       def derive_all_properties
         @original_object_type.property_names_to_types.each do |name, type|
+          property(name, type) unless @properties[name]
+        end
+      end
+
+      def derive_all_properties_except(*props)
+        @original_object_type.property_names_to_types.each do |name, type|
+          next if props.include?(name)
           property(name, type) unless @properties[name]
         end
       end
