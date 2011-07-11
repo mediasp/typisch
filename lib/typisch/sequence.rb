@@ -45,12 +45,8 @@ class Typisch::Type
       "sequence(#{@type.to_s(depth+1, indent)})"
     end
 
-    def canonicalize(existing_canonicalizations={}, *)
-      result = existing_canonicalizations[self] and return result
-      result = existing_canonicalizations[self] = self.class.allocate
-      result.send(:initialize, @type.canonicalize(existing_canonicalizations))
-      result.send(:annotations=, @annotations) if @annotations
-      result
+    def canonicalize!
+      @type = @type.target
     end
 
   end

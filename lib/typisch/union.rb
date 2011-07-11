@@ -8,9 +8,8 @@ module Typisch
     end
 
     def check_type(instance, &recursively_check_type)
-      # this relies on the safe backtracking provided by the recursively_check_type
-      # block passed in by the caller
-      @alternative_types.any? {|t| recursively_check_type[t, instance]}
+      type = @alternative_types.find {|t| t.shallow_check_type(instance)}
+      type && recursively_check_type[type, instance]
     end
 
     def shallow_check_type(instance)
@@ -22,63 +21,13 @@ module Typisch
       types.length == 1 ? types.first : Type::Union.new(*types)
     end
 
-    # Aside from sorting out uses of recursion, canonicalising unions is
-    # the main non-trivial thing which canonicalisation does to the type
-    # graph at present.
-    def canonicalize(existing_canonicalizations={}, recursion_unsafe={})
-      raise IllFormedRecursiveType if recursion_unsafe[self]
-      result = existing_canonicalizations[self] and return result
-      recursion_unsafe[self] = true
+    def canonicalize!
+      @alternative_types.map!(&:target)
 
-      if @alternative_types.length == 0
-        # Return the special 'Nothing' type as the canonicaliszation of an
-        # empty union. (Nothing is just an empty union itself, but one with
-        # a special printed name; so this is superficial but nice to do)
-        existing_canonicalizations[self] = Type::Nothing::INSTANCE
-        return Type::Nothing::INSTANCE
+      unless @alternative_types.all? {|t| Type::Constructor === t} &&
+             (tags = @alternative_types.map(&:tag)).uniq.length == tags.length
+        raise TypeDeclarationError, "the types in a Union must be constructor types with different tags"
       end
-
-      # pre-allocate a placeholder for our result, which we pass on to child
-      # nodes
-      result = existing_canonicalizations[self] = Type::Union.allocate
-
-      # find out the canonicalizations of our children.
-      # we pass on the set of recursion_unsafe things when doing so, because a union isn't a constructor
-      # type and we need to encounter a constructor type before we can allow recursion
-      types = @alternative_types.map {|t| t.canonicalize(existing_canonicalizations, recursion_unsafe)}
-
-      # pop ourselves off the recursion_unsafe 'stack' now we're done calling canonicalize
-      # recursively
-      recursion_unsafe.delete(self)
-
-      # Now, any of these which in turn are unions, need to get flattened out.
-      # Because we recursively canonicalised them, we know that unions within
-      # the children must only go one level deep.
-      # Unless, there was a cyclic reference back to us within one of the nested unions,
-      # which we'll need to catch afterwards.
-      types.map!(&:alternative_types).flatten!(1)
-
-      # now, we see what's the smallest subset of these types whose union is equal to that
-      # of the overall set?
-      # FIXME: breaks in presence of recursion, disabled pending rethink of union canonicalisation
-      #types = Typisch.find_minimal_set_of_upper_bounds(*types)
-
-      # finally can initialize the union which we allocated earlier:
-      result.send(:initialize, *types)
-      result.send(:annotations=, @annotations) if @annotations
-
-      # hang on though - if there's only one term in the union, we'd actually rather
-      # canonicalise to that one term, without a redundant union wrapper around it.
-      #
-      # Note that the pre-allocated Union object still got passed recursively to
-      # children, so we do initialize it so any children who picked up on it can
-      # use it without breaking (they just won't get the benefit of this additional
-      # optimisation). This is unlikely to happen though.
-      if types.length == 1
-        result = existing_canonicalizations[self] = types.first
-      end
-
-      result
     end
 
     def to_string(depth, indent)
@@ -97,8 +46,6 @@ module Typisch
 
     def to_s(*); @name.inspect; end
 
-    def canonicalize(*); self; end
-
     INSTANCE = new
     class << self; private :new; end
     Registry.register_global_type(:nothing, INSTANCE)
@@ -113,7 +60,7 @@ module Typisch
 
     def to_s(*); @name.inspect; end
 
-    def canonicalize(*); self; end
+    def canonicalize!; end
 
     # skip some unnecessary work checking different alternatives, since we know everything
     # works here:

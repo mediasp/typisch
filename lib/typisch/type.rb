@@ -47,18 +47,6 @@ class Typisch::Type
     end
   end
 
-  # Union and intersection
-
-  def union(*others)
-    Union.new(self, *others)
-  end
-  alias :| :union
-
-  def intersection(*others)
-    Interesction.intersection(self, *others)
-  end
-  alias :& :intersection
-
 
   def inspect
     "#<Type: #{to_s}>"
@@ -108,6 +96,11 @@ class Typisch::Type
     raise NotImplementedError
   end
 
+  # should update any references to subexpression types to point at their true
+  # target, eliminating any NamedPlaceholder wrappers.
+  def canonicalize!
+  end
+
   # Does this type make any use of recursion / is it an 'infinite' type?
   def recursive?(found_so_far={})
     found_so_far[self] or begin
@@ -117,21 +110,6 @@ class Typisch::Type
       found_so_far.delete(self)
       result
     end
-  end
-
-  # This may be called to canonicalize the type graph starting at this type.
-  # it should always return something == to self.
-  #
-  # Before calling canonicalize recursively on other child types, it needs to
-  # first check in the existing_canonicalizations map.
-  # It should also add the mapping for self into this map and pass it on
-  # down the call graph if it does call canonicalize on child types.
-  # This is so it can work in a possibly-cyclic graph setting, as per the
-  # various other coinductive/corecursive algorithms we have for types.
-  # (unlike with subtyping though, we don't at present backtrack during
-  # canonicalization).
-  def canonicalize(existing_canonicalizations=nil, recursion_unsafe=nil)
-    self
   end
 
   # should check the type of this instance, but only 'one level deep', ie

@@ -59,16 +59,10 @@ class Typisch::Type
       "object(#{tag}\n#{next_indent}#{pairs.join(",\n#{next_indent}")}\n#{indent})"
     end
 
-    def canonicalize(existing_canonicalizations={}, *)
-      result = existing_canonicalizations[self] and return result
-      result = existing_canonicalizations[self] = self.class.allocate
-      property_names_to_types = {}
-      @property_names_to_types.each do |name, type|
-        property_names_to_types[name] = type.canonicalize(existing_canonicalizations)
+    def canonicalize!
+      @property_names_to_types.keys.each do |name|
+        @property_names_to_types[name] = @property_names_to_types[name].target
       end
-      result.send(:initialize, @tag, property_names_to_types)
-      result.send(:annotations=, @annotations) if @annotations
-      result
     end
 
     def property_annotations(property_name)

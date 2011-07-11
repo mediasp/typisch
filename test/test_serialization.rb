@@ -14,14 +14,14 @@ describe "JSONSerializer" do
         register :foo, :object do
           property :abc, tuple(:date, :time, :null, :real, :integer, :string)
           property :def, sequence(object(Vbn, :foo => :integer, :bar => :integer))
-          property :ghi, sequence(union(object(Zxc, :foo => :integer), :string, object(:bar => :string)))
+          property :ghi, sequence(union(object(Zxc, :foo => :integer), :string, object(Vbn, :bar => :integer)))
           property :jkl, sequence(union(:integer, :null))
         end
       end
       @object = OpenStruct.new(
         :abc => [Date.new(2011,6,20), Time.utc(2011,6,20,21,6,12), nil, 1.23, 123, 'hello'],
         :def => [Vbn.new(:foo => 123, :bar => 456, :baz => "not included")],
-        :ghi => [Zxc.new(:foo => 123), "string", Zxc.new(:bar => "hello")],
+        :ghi => [Zxc.new(:foo => 123), "string", Vbn.new(:bar => 456)],
         :jkl => [1,nil,3],
         :baz => "not included"
       )
@@ -39,7 +39,7 @@ describe "JSONSerializer" do
         "ghi"       => [
           {"__class__"=>"Zxc", "foo"=>123},
           "string",
-          {"__class__"=>"Zxc", "bar"=>"hello"}
+          {"__class__"=>"Vbn", "bar"=>456}
         ],
         "jkl" => [1, nil, 3]
       }
@@ -59,33 +59,31 @@ describe "JSONSerializer" do
         "ghi"       => [
           {"DA_CLASS_IS"=>"ZedExCee", "foo"=>123},
           "string",
-          {"DA_CLASS_IS"=>"ZedExCee", "bar"=>"hello"}
+          {"DA_CLASS_IS"=>"VeeBeeEn", "bar"=>456}
         ],
         "jkl" => [1, nil, 3]
       }
     end
   end
 
-  # at present this is potentially a bit costly as it has to do a full type-check on
-  # the remaining object graph before it can know for sure that it's picked the right
-  # clause to serialize as, when serializing via an untagged union.
-  #
-  # I may ditch untagged unions and with them this behaviour - cost/benefit seems a bit
-  # skewed.
-  it "should serialize a union based on which clause it type-checks as" do
+  it "should serialize a tagged union based on which clause its tag matches (and complain if it doesn't match any)" do
     @registry = Registry.new
     @registry.register do
       register :union, union(
-        tuple(:integer, object(:foo => :string)),
-        tuple(:string, object(:bar => :integer))
+        object(Zxc, :foo => :string),
+        object(Vbn, :bar => :integer)
       )
     end
     @serializer = JSONSerializer.new(@registry[:union])
 
-    jsonable = @serializer.serialize_to_jsonable([123, OpenStruct.new(:foo => 'hello', :bar => 123)])
-    assert_equal jsonable, [123, {"__class__"=>"OpenStruct", "foo" => 'hello'}]
+    jsonable = @serializer.serialize_to_jsonable(Zxc.new(:foo => 'hello'))
+    assert_equal jsonable, {"__class__"=>"Zxc", "foo" => 'hello'}
 
-    jsonable = @serializer.serialize_to_jsonable(["string", OpenStruct.new(:foo => 'hello', :bar => 123)])
-    assert_equal jsonable, ["string", {"__class__"=>"OpenStruct", "bar" => 123}]
+    jsonable = @serializer.serialize_to_jsonable(Vbn.new(:bar => 123))
+    assert_equal jsonable, {"__class__"=>"Vbn", "bar" => 123}
+
+    assert_raises(SerializationError) do
+      @serializer.serialize_to_jsonable(OpenStruct.new(:bar => 123))
+    end
   end
 end

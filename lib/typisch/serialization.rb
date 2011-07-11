@@ -46,23 +46,15 @@ module Typisch
         result
 
       when Type::Union
-        # todo: a better way to backtrack during serialization of unions,
-        # or maybe just ditch the untagged union idea which would avoid the need
-        # for backtracking
-
-        viable_types = type.alternative_types.select {|t| t.shallow_check_type(value)}
-        type = if viable_types.length == 1
-          viable_types.first
-        else
-          viable_types.find {|t| t === value}
-        end
+        type = type.alternative_types.find {|t| t.shallow_check_type(value)}
+        raise SerializationError, "No types in union #{type} matched #{value.inspect}, could not serialize" unless type
         serialize_to_jsonable(value, type, seen_values)
 
       when Type::Constructor # Numeric, Null, String, Boolean etc
         value
 
       else
-        raise "Type #{type} not supported for serialization"
+        raise SerializationError, "Type #{type} not supported for serialization of #{value.inspect}"
       end
 
       seen_values.delete(value)

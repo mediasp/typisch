@@ -1,8 +1,5 @@
 In rough priority order:
 
-Easy ways to make supertypes / subtypes from existing types
-  - making supertypes in particular
-
 deserialization with typechecking
 
 type-checking
@@ -16,14 +13,18 @@ refinements of String, Numeric etc
   - integer ranges
   - enums - sets of allowed values
 
+allow tags to be registered in the registry, together with:
+  - what kind of constructor type the tag is used with
+  - what ruby class(es) correspond to it
+  - possibly: a type representing the strictest structural type which may be applied to instances of this tag
+    - together with 'version' types, structural supertypes of the main type for this tag corresponding to partial serialization versions of it
+  - for deserialization: a block that can be used to construct one
+  - maybe allow types other than Object to have a custom tag too?
+
 stop String type-checking as Sequence via its Enumerable implementation (which isn't even a sequence of characters, rather lines)
 
 compute canonicalised intersections
-
-either: consider ditching untagged unions altogether, or,
-an optional further lossy canonical form for unions where only structural features of all terms in the union are preserved
-
-remove vestiges of 'tag' as a first-class concept, and make Object accept a ruby class/module directly not a string
+compute canonicalised unions, with untagged unions replaced by a least upper bound
 
 better convenience methods for traversing the type graph and getting info about it
 

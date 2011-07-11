@@ -41,10 +41,13 @@ module Typisch
     end
 
     # All registering of types in a registry needs to be done inside one of these
-    # blocks; it ensures that the types are canonicalized, and any uses of recursion
-    # are validated and wired up canonically afterwards.
-    # If you really can't use the block, you can call canonicalize_registered_types!
-    # manually once you're done registering them.
+    # blocks; it ensures that the any forward references or cyclic references are
+    # resolved (via canonicalize!-ing every type in the type graph) once you've
+    # finished registering types.
+    #
+    # This also ensures that any uses of recursion are valid / well-founded, and
+    # does any other necessary validation of the type graph you've declared which
+    # isn't possible to do upfront.
     #
     # You can nest register blocks without ill-effect; it will only try to
     # resolve forward references etc once the outermost block has exited.
@@ -69,16 +72,20 @@ module Typisch
     def stop_registering_types!
       @registering_types = false
 
-      # important that we maintain the canonicalizations hash
-      # between calls, so that the different registered types know
-      # about how eachother canonicalize and don't duplicate work.
-      canonicalizations = {}
-      @pending_canonicalization.each do |name, (type, callback)|
-        canonicalized_type = @types_by_name[name] = type.canonicalize(canonicalizations)
-        canonicalized_type.send(:name=, name) unless canonicalized_type.name
-        callback.call(canonicalized_type) if callback
-      end
+      types = @pending_canonicalization.values.map {|t,c| t}
+      each_type_in_graph(*types) {|t| t.canonicalize!}
+      @pending_canonicalization.each {|name,(type,callback)| callback.call if callback}
       @pending_canonicalization = {}
+    end
+
+    def each_type_in_graph(*types)
+      seen_so_far = {}
+      while (type = types.pop)
+        next if seen_so_far[type]
+        seen_so_far[type] = true
+        yield type
+        types.push(*type.subexpression_types)
+      end
     end
 
     # Allow you to dup and merge registries
@@ -101,81 +108,6 @@ module Typisch
         "r.register #{n.inspect}, #{t.to_s(0, '  ')}"
       end.compact
       "Typisch::Registry.new do |r|\n  #{pairs.join("\n  ")}\nend"
-    end
-  end
-
-  # This is a proxy wrapper for a type, which we can use as a placeholder for a named
-  # type which hasn't yet been declared. Helps when it comes to cyclic references etc.
-  #
-  # (You can view this as a free variable, where the scope of all free variables is
-  #  implicitly closed over at the top level by the 'registry'. We don't keep variables
-  #  lying around as symbolic things in a syntax tree though, we're just using them as
-  #  temporary placeholders on the way to rewriting it as a syntax *graph*).
-  class Type::NamedPlaceholder < Type
-    def initialize(name, registry)
-      @registry = registry
-      @name = name
-    end
-
-    def target
-      return @target if @target
-      @target = @registry[@name]
-      case @target when NilClass, Type::NamedPlaceholder
-        raise NameResolutionError.new(@name.inspect)
-      end
-    end
-
-    attr_writer :target
-    private :target=
-
-    # this is slightly naughty - we actually pretend to be of the class
-    # of our target object.
-    #
-    # note that TargetClass === placeholder will still return false.
-
-    def class
-      target.class
-    end
-
-    def is_a?(klass)
-      target.is_a?(klass)
-    end
-    alias :kind_of? :is_a?
-
-    def instance_of?(klass)
-      target.instance_of?(klass)
-    end
-
-    def to_s(*)
-      @name.inspect
-    end
-
-    # canonicalizes to the canonicalisation of its target, meaning these placeholder
-    # wrappers will get eliminated at the canonicalization stage.
-    def canonicalize(existing_canonicalizations={}, recursion_unsafe={})
-      result = existing_canonicalizations[self] and return result
-
-      raise IllFormedRecursiveType if recursion_unsafe[self]
-      recursion_unsafe[self] = true
-
-      result = target.canonicalize(existing_canonicalizations, recursion_unsafe)
-      existing_canonicalizations[self] = result
-
-      recursion_unsafe.delete(self)
-
-      result
-    end
-
-    # let us proxy these through
-    undef :alternative_types, :check_type, :shallow_check_type, :subexpression_types
-    undef :excluding_null, :annotations
-
-    def method_missing(name, *args, &block)
-      target.respond_to?(name) ? target.send(name, *args, &block) : super
-    end
-
-    def respond_to?(name, include_private=false)
-      super || target.respond_to?(name, include_private)
     end
   end
 

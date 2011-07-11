@@ -44,7 +44,7 @@ module Typisch
 
     module ClassMethods
       def type
-        @type || raise("Forgot to register_type for Typisch::Typed class, or attempting to get type before registered type graph has been canonicalized")
+        @type || raise("Forgot to register_type for Typisch::Typed class")
       end
 
       def type_of(property_name)
@@ -53,22 +53,16 @@ module Typisch
 
     private
       def register_type(in_registry = Typisch.global_registry, derive_from_type=nil, &block)
-        raise "Type already registered for #{self}" if @pending_type || @type
+        raise "Type already registered for #{self}" if @type
+
+        # a pox on instance_eval's scoping rules :(
         register_as_symbol = to_s.to_sym
-        callback = method(:type=); klass = self; type = nil
+        callback = method(:type_available); klass = self; type = nil
         in_registry.register do
           type = _object(klass, {}, derive_from_type, &block)
+          klass.send(:instance_variable_set, :@type, type)
           in_registry.register_type(register_as_symbol, type, &callback)
         end
-        @pending_type = type
-      end
-
-      def pending_type; @pending_type || @type; end
-
-      def type=(canonicalized_type)
-        @pending_type = nil
-        @type = canonicalized_type
-        type_available
       end
 
       # Called once the type which you registered is available in a fully canonicalized form
@@ -85,19 +79,19 @@ module Typisch
       end
 
       def register_subtype(in_registry = Typisch.global_registry, &block)
-        raise "Type already registered for #{self}" if @pending_type || @type
+        raise "Type already registered for #{self}" if @type
         raise "register_subtype: superclass was not typed" unless superclass < Typed
         register_as_symbol = to_s.to_sym
-        supertype = superclass.send(:pending_type)
-        callback = method(:type=); klass = self; type = nil
+        supertype = superclass.send(:type)
+        callback = method(:type_available); klass = self; type = nil
         in_registry.register do
           type = derived_from(supertype, klass) do
             instance_eval(&block)
             derive_all_properties
           end
+          klass.send(:instance_variable_set, :@type, type)
           in_registry.register_type(register_as_symbol, type, &callback)
         end
-        @pending_type = type
       end
     end
   end

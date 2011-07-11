@@ -56,12 +56,6 @@ describe "Union types" do
   end
 
   describe "union" do
-    it "should allow either syntax: <type>.union(other) or Type::Union.new(type, other)" do
-      assert_equal \
-        Type::Union.new(@boolean, @integer),
-        @boolean.union(@integer)
-    end
-
     it "should not be sensitive to ordering when doing comparisons" do
       assert_equal \
         Type::Union.new(@boolean, @integer),
@@ -122,50 +116,10 @@ describe "Union types" do
     end
 
     describe "unions of object types" do
-      it "should allow subtypes where they subtype any clause of the union, even when type tags don't differ (this requires backtracking)" do
-        union = Type::Union.new(
-          (first_clause = Type::Object.new('Object', :foo => @integer)),
-          Type::Object.new('Object', :bar => @integer)
-        )
-
-        # this will test twice against the two clauses in order. the first will fail, and it'll backtrack;
-        # the second will then succeed:
-        assert_operator Type::Object.new('Object', :bar => @integer, :baz => @boolean), :<=, union
-
-        # check that the first test didn't polute the state of the subtyper, ie that it
-        # backtracked cleanly. important that we use the same actual instance for that first clause:
-        refute_operator Type::Object.new('Object', :bar => @integer, :baz => @boolean), :<=, first_clause
-        # although actually, since the subtyper doesn't at present maintain state between runs, we
-        # need something a bit more tricksy to test this, see next test
-
-        # check something works against the first clause too
-        assert_operator Type::Object.new('Object', :foo => @integer, :baz => @boolean), :<=, union
-
-        # and something which satisfies both clauses
-        assert_operator Type::Object.new('Object', :foo => @integer, :bar => @integer, :baz => @boolean), :<=, union
-
-        # something which satisfies neither:
-        refute_operator Type::Object.new('Object', :baz => @boolean), :<=, union
-      end
-
-      # this example would trip up the subtyper if it didn't backtrack safely after eliminating the first clause
-      # in the union
-      it "should backtrack safely when checking subtyping against multiple clauses of a union" do
-        union = Type::Union.new(
-          @integer,
-          Type::Object.new('Object', :property => @integer)
-        )
-        type = Type::Object.allocate
-        type.send(:initialize, 'Object', :property => type)
-        def type.to_s; 'the_recursive_type'; end # avoid .inspect stack trace problems printing any error
-
-        refute_operator type, :<=, union
-      end
-
       it "should allow a union to be a subtype of something only when all of its clauses are a subtype of it" do
         union = Type::Union.new(
-          Type::Object.new('Object', :foo => @integer),
-          Type::Object.new('Object', :bar => @integer)
+          Type::Object.new('TestClass', :foo => @integer),
+          Type::Object.new('TestClass2', :bar => @integer)
         )
         assert_operator union, :<=, Type::Object.new('Object')
 
@@ -174,11 +128,11 @@ describe "Union types" do
         refute_operator union, :<=, Type::Object.new('Object', :xyz => @integer)
       end
 
-      # we might relax this requirement, depending:
-      it "should not simplify unions to be equal to a crude upper bound" do
+      # untagged unions however are currently not allowed and if allowed might be simplified
+      it "should not simplify tagged unions to be equal to a crude upper bound" do
         union = Type::Union.new(
-          Type::Object.new('Object', :foo => @integer),
-          Type::Object.new('Object', :bar => @integer)
+          Type::Object.new('TestClass', :foo => @integer),
+          Type::Object.new('TestClass2', :bar => @integer)
         )
         # the union is a strict subtype of this, not equal:
         assert_operator Type::Object.new('Object'), :>, union
@@ -220,42 +174,19 @@ describe "Union types" do
       end
 
       AbcDef = Class.new(OpenStruct)
+      GhiJkl = Class.new(OpenStruct)
 
-      it "should type-check where the instance matches any clause of the union, even when type tags don't differ (this requires backtracking)" do
+      it "should type-check against the clause of the union whose tag the instance matches" do
         union = Type::Union.new(
           (first_clause = Type::Object.new('AbcDef', :abc => @integer)),
-          Type::Object.new('AbcDef', :def => @integer)
+          Type::Object.new('GhiJkl', :def => @integer)
         )
 
-        # this will test twice against the two clauses in order. the first will fail, and it'll backtrack;
-        # the second will then succeed:
-        instance = AbcDef.new(:def => 123)
-        assert_operator union, :===, instance
-
-        # check that the first test didn't polute the state of the subtyper, ie that it
-        # backtracked cleanly. important that we use the same actual instance for that first clause:
-        refute_operator first_clause, :===, instance
-        # although actually, since the type-checker doesn't at present maintain state between runs, we
-        # need something a bit more tricksy to test this, see next test
-
-        # check something works against the first clause too
         assert_operator union, :===, AbcDef.new(:abc => 123)
-        # and something which satisfies both clauses
-        assert_operator union, :===, AbcDef.new(:abc => 123, :def => 456)
+        assert_operator union, :===, GhiJkl.new(:def => 123)
 
         refute_operator union, :===, AbcDef.new
-      end
-
-      # this example would trip up the type checker didn't backtrack safely after eliminating the first clause
-      # in the union
-      it "should backtrack safely when type-checking against multiple clauses of a union" do
-        union = Type::Union.new(
-          @integer,
-          Type::Object.new('AbcDef', :abc => @integer)
-        )
-        instance = AbcDef.new
-        instance.abc = instance
-        refute_operator union, :===, instance
+        refute_operator union, :===, GhiJkl.new
       end
     end
 

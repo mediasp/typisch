@@ -5,6 +5,7 @@ require 'typisch/constructor'
 
 require 'typisch/dsl'
 require 'typisch/registry'
+require 'typisch/named_placeholder'
 
 require 'typisch/boolean'
 require 'typisch/null'

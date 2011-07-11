@@ -41,8 +41,8 @@ module Typisch
       # It should return true or false; if it needs to check some subgoals,
       # say on child types of the ones passed in, it should use the supplied
       # 'recursively_check_subtype' block rather than calling itself recursively
-      # directly. Doing it this way means you get all the co-recursive backtracking
-      # goodness of the subtyper for free.
+      # directly. This hides away the details of the corecursive subtyping algorithm
+      # for you.
       def check_subtype(x, y, &recursively_check_subtype)
         raise NotImplementedError
       end

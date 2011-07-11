@@ -67,12 +67,8 @@ class Typisch::Type
       "tuple(\n#{next_indent}#{types.join(",\n#{next_indent}")}\n#{indent})"
     end
 
-    def canonicalize(existing_canonicalizations={}, *)
-      result = existing_canonicalizations[self] and return result
-      result = existing_canonicalizations[self] = self.class.allocate
-      result.send(:initialize, *@types.map {|t| t.canonicalize(existing_canonicalizations)})
-      result.send(:annotations=, @annotations) if @annotations
-      result
+    def canonicalize!
+      @types.map!(&:target)
     end
   end
 end

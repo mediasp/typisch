@@ -92,8 +92,19 @@ describe "Registry" do
     refute Typisch::Type::Boolean === @registry[:foo]
   end
 
-  it "should ensure all types registered in a register block get canonicalized in a batch afterwards (and any recursion or name resolution errors caught)" do
-    assert_raises(IllFormedRecursiveType) do
+  it "should ensure all types registered in a register block get canonicalized in a batch afterwards, with any NamedPlaceholders eliminated and any recursion or name resolution errors caught" do
+    @registry = Registry.new
+    @registry.register do
+      register :foo, object(:bar => :baz)
+      register :baz, sequence(tuple(:foo))
+    end
+    assert_same @registry[:foo], @registry[:foo][:bar].type[0]
+    refute Type::NamedPlaceholder === @registry[:foo]
+    refute Type::NamedPlaceholder === @registry[:foo][:bar]
+    refute Type::NamedPlaceholder === @registry[:foo][:bar].type[0]
+
+    @registry = Registry.new
+     assert_raises(NameResolutionError) do
       @registry.register do
         register :foo, :foo
       end
@@ -126,6 +137,56 @@ describe "Registry" do
     # and @registry[:bar]
     assert_same @registry[:bar], @registry[:foo].type
     assert_same @registry[:foo], @registry[:bar][0]
+  end
+
+  it "should check, on completion of type registration, that union types are well-formed" do
+
+    # Cases with only unions in the cycle, eg "foo = foo union foo" - makes no sense
+
+    @registry = Registry.new
+    assert_raises(TypeDeclarationError) do
+      @registry.register do
+        register :foo, union(:foo)
+      end
+    end
+
+    @registry = Registry.new
+    assert_raises(TypeDeclarationError) do
+      @registry.register do
+        register :foo, union(union(:foo))
+      end
+    end
+
+    @registry = Registry.new
+    assert_raises(TypeDeclarationError) do
+      @registry.register do
+        register :foo, union(:foo, :foo)
+      end
+    end
+
+    # Unions which don't have distinct tags on their alternative clauses
+
+    @registry = Registry.new
+    assert_raises(TypeDeclarationError) do
+      @registry.register do
+        register :foo, union(:integer, :integer)
+      end
+    end
+
+    @registry = Registry.new
+    assert_raises(TypeDeclarationError) do
+      @registry.register do
+        register :foo, union(:integer, :integer)
+      end
+    end
+
+    @registry = Registry.new
+    assert_raises(TypeDeclarationError) do
+      @registry.register do
+        register :foo, union(object(Object, :foo => :integer), object(Object, :bar => :integer))
+      end
+    end
+
   end
 
 end
