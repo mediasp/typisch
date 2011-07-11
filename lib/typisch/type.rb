@@ -93,7 +93,7 @@ class Typisch::Type
   # should return a list of any subexpressions which are themselves types.
   # used by any generic type-graph-traversing logic.
   def subexpression_types
-    raise NotImplementedError
+    []
   end
 
   # should update any references to subexpression types to point at their true

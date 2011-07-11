@@ -76,9 +76,5 @@ module Typisch
       case instance when *@valid_implementation_classes then true else false end
     end
     alias :check_type :shallow_check_type
-
-    def subexpression_types
-      []
-    end
   end
 end

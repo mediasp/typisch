@@ -67,6 +67,10 @@ module Typisch
       end
     end
 
+    def string(refinements=nil)
+      refinements ? Type::String.new(refinements) : registry[:string]
+    end
+
     def sequence(*type_args)
       Type::Sequence.new(type(*type_args))
     end

@@ -7,7 +7,6 @@ type-checking
   - ability to truncate a type to a certain depth as a nicer more general way to do 'type-check this to depth x' rather than the more ad-hoc shallow_type_check stuff
 
 refinements of String, Numeric etc
-  - length limits
   - integer ranges
   - enums - sets of allowed values
 
