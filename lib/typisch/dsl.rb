@@ -20,6 +20,20 @@ module Typisch
       result
     end
 
+    def register_type_for_class(klass, *object_type_args, &object_type_block_arg)
+      name = :"#{klass}"
+      type = register(name, :object, klass, *object_type_args, &object_type_block_arg)
+      registry.register_type_for_class(klass, type)
+      type
+    end
+
+    def register_version_type_for_class(klass, version, *object_type_args, &object_type_block_arg)
+      name = :"#{klass}__#{version}"
+      type = register(name, :object, klass, *object_type_args, &object_type_block_arg)
+      registry.register_version_type_for_class(klass, version, type)
+      type
+    end
+
     # annotations apply to the next register'd type.
     #
     # annotate "Some description", :some_other => 'annotations'
@@ -41,16 +55,20 @@ module Typisch
       when ::Symbol
         if more_args.empty? && !block_arg
           registry[arg]
+        elsif more_args.last.is_a?(::Hash) && !block_arg && (version = more_args.last[:version])
+          registry[:"#{arg}__#{version}"]
         else
           send(arg, *more_args, &block_arg)
         end
+      when ::Module
+        type(:"#{arg}", *more_args, &block_arg)
       else
-        raise ArgumentError, "expected Type or type name, but was given #{arg.class}"
+        raise ArgumentError, "expected Type or type name or class, but was given #{arg.class}"
       end
     end
 
-    def sequence(type_arg)
-      Type::Sequence.new(type(type_arg))
+    def sequence(*type_args)
+      Type::Sequence.new(type(*type_args))
     end
 
     def tuple(*types)
@@ -103,6 +121,13 @@ module Typisch
     def derived_from(original_type, *args, &block_arg)
       if args.empty? && !block_arg
         original_type
+      elsif args.last.is_a?(::Hash) && (version = args.last[:version]) && original_type.name
+        # slightly messy; we rely on the convention that 'versions' of named types are registered
+        # as :"#{name}__#{version}", this allows you to specify or override the version when
+        # deriving from a type, even if it is still just a named placeholder, by manipulating the
+        # name.
+        original_name = original_type.name.to_s.sub(/__.*$/, '')
+        :"#{original_name}__#{version}"
       else
         original_type = type(original_type).target
         case original_type

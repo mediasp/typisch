@@ -51,18 +51,45 @@ module Typisch
         type[property_name]
       end
 
+      def version_types
+        @version_types ||= {}
+      end
+
+      def versions
+        version_types.keys
+      end
+
+      def version_type(key)
+        version_types[key]
+      end
+
     private
       def register_type(in_registry = Typisch.global_registry, derive_from_type=nil, &block)
         raise "Type already registered for #{self}" if @type
 
         # a pox on instance_eval's scoping rules :(
-        register_as_symbol = to_s.to_sym
         callback = method(:type_available); klass = self; type = nil
         in_registry.register do
           type = _object(klass, {}, derive_from_type, &block)
           klass.send(:instance_variable_set, :@type, type)
-          in_registry.register_type(register_as_symbol, type, &callback)
+          in_registry.register_type(:"#{klass}", type, &callback)
+          in_registry.register_type_for_class(klass, type)
         end
+        type
+      end
+
+      def register_version_type(version, in_registry = Typisch.global_registry, &block)
+        raise "should register_type before register_version_type" unless @type
+
+        callback = method(:type_available); klass = self; type = nil
+        derive_from_type = @type
+        in_registry.register do
+          type = _object(klass, {}, derive_from_type, &block)
+          klass.version_types[version] = type
+          in_registry.register_type(:"#{klass}__#{version}", type, &callback)
+          in_registry.register_type_for_class(klass, type)
+        end
+        type
       end
 
       # Called once the type which you registered is available in a fully canonicalized form
@@ -81,7 +108,6 @@ module Typisch
       def register_subtype(in_registry = Typisch.global_registry, &block)
         raise "Type already registered for #{self}" if @type
         raise "register_subtype: superclass was not typed" unless superclass < Typed
-        register_as_symbol = to_s.to_sym
         supertype = superclass.send(:type)
         callback = method(:type_available); klass = self; type = nil
         in_registry.register do
@@ -90,7 +116,8 @@ module Typisch
             derive_all_properties
           end
           klass.send(:instance_variable_set, :@type, type)
-          in_registry.register_type(register_as_symbol, type, &callback)
+          in_registry.register_type(:"#{klass}", type, &callback)
+          in_registry.register_type_for_class(klass, type)
         end
       end
     end

@@ -1,5 +1,3 @@
-In rough priority order:
-
 deserialization with typechecking
 
 type-checking
@@ -13,13 +11,14 @@ refinements of String, Numeric etc
   - integer ranges
   - enums - sets of allowed values
 
-allow tags to be registered in the registry, together with:
-  - what kind of constructor type the tag is used with
-  - what ruby class(es) correspond to it
-  - possibly: a type representing the strictest structural type which may be applied to instances of this tag
-    - together with 'version' types, structural supertypes of the main type for this tag corresponding to partial serialization versions of it
-  - for deserialization: a block that can be used to construct one
-  - maybe allow types other than Object to have a custom tag too?
+classes/type tags
+  - allow you to specify a constructor block for a class for use when deserializing
+  - maybe allow some gentle decoupling between notion of a ruby class and a 'type tag',
+    whereby multiple ruby classes can be viewed as implementing the same type tag for
+    typing purposes, or potentially vice versa eg Array can be seen as a Tuple or a
+    Sequence despite this not technically being sound
+  - maybe allow types other than Object to have a custom tag too? eg custom String-based
+    types
 
 stop String type-checking as Sequence via its Enumerable implementation (which isn't even a sequence of characters, rather lines)
 
@@ -27,5 +26,10 @@ compute canonicalised intersections
 compute canonicalised unions, with untagged unions replaced by a least upper bound
 
 better convenience methods for traversing the type graph and getting info about it
+  - refer to clause of a tagged union by class/type tag
 
 ensure annotations play nice with derived types
+
+Typed:
+  - way to inherit version types from superclass's version types
+  - way to type-check against a version type

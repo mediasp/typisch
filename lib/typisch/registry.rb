@@ -6,15 +6,19 @@ module Typisch
   # -
   #
   class Registry
-    attr_reader :types_by_name
+    attr_reader :types_by_name, :types_by_class, :types_by_class_and_version
 
     def initialize(&block)
       @types_by_name = GLOBALS.dup
       @pending_canonicalization = {}
+      @types_by_class = {}
+      @types_by_class_and_version = {}
       register(&block) if block
     end
 
-    def [](name)
+    def [](name, version=nil)
+      name = :"#{name}" if name.is_a?(::Module)
+      name = :"#{name}__#{version}" if version
       @types_by_name[name] ||= Type::NamedPlaceholder.new(name, self)
     end
 
@@ -108,6 +112,14 @@ module Typisch
         "r.register #{n.inspect}, #{t.to_s(0, '  ')}"
       end.compact
       "Typisch::Registry.new do |r|\n  #{pairs.join("\n  ")}\nend"
+    end
+
+    def register_type_for_class(klass, type)
+      @types_by_class[klass] = type
+    end
+
+    def register_version_type_for_class(klass, version, type)
+      @types_by_class_and_version[[klass, version]] = type
     end
   end
 

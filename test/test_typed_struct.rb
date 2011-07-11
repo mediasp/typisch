@@ -35,6 +35,11 @@ describe "Typed" do
     # check the forward reference from one class to the next got hooked up OK
     assert_equal bar_type, foo_type[:bar]
     assert_equal foo_type, bar_type[:foo]
+
+    assert_same Typisch[:Foo], Typisch[Foo]
+    assert_same Typisch[:Bar], Typisch[Bar]
+    assert_same foo_type, Typisch.global_registry.types_by_class[Foo]
+    assert_same bar_type, Typisch.global_registry.types_by_class[Bar]
   end
 
   it "should let you specify which registry to register it in" do
@@ -123,4 +128,43 @@ describe "Typed" do
     assert_nil Abc.type_of(:prop3)
   end
 
+  class Hjk
+    include Typed
+    register_type do
+      property :x, :string
+      property :y, :string
+    end
+
+    register_version_type(:x_only) do
+      derive_property :x
+    end
+
+    register_version_type(:y_only) do
+      derive_property :y
+    end
+  end
+
+  class Lmn
+    include Typed
+    register_type do
+      property :hjk, Hjk
+      property :hjk2, :Hjk
+    end
+
+    register_version_type(:foo) do
+      derive_property :hjk, :version => :x_only
+      derive_property :hjk2, :version => :y_only
+    end
+  end
+
+  it "should let you register version types derived from the main type registered for a class" do
+    assert_equal [:x], Hjk.version_types[:x_only].property_names
+    assert_equal [:y], Hjk.version_types[:y_only].property_names
+    assert_equal Hjk, Hjk.version_types[:y_only].class_or_module
+  end
+
+  it "should let you specify just a :version when deriving from a type for a class for which versions have been registered; this will use that version type for the derived type" do
+    assert_same Hjk.version_types[:x_only], Lmn.version_types[:foo][:hjk]
+    assert_same Hjk.version_types[:y_only], Lmn.version_types[:foo][:hjk2]
+  end
 end
