@@ -72,7 +72,12 @@ module Typisch
     end
 
     def sequence(*args)
-      seq_options = (args.last.is_a?(Hash) && args.last[:slice]) ? args.pop : {}
+      seq_options = {}
+      if (opts = args.last and opts.is_a?(::Hash))
+        seq_options[:slice] = opts.delete(:slice) if opts.has_key?(:slice)
+        seq_options[:total_length] = opts.delete(:total_length) if opts.has_key?(:total_length)
+        args.pop if opts.empty?
+      end
       Type::Sequence.new(type(*args), seq_options)
     end
 
