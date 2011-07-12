@@ -38,6 +38,8 @@ describe "Registry#register / DSLContext" do
         property(:favourite_cheese, :object) do
           property :smelliness, :real
         end
+
+        property :numbers, sequence(:integer)
       end
 
       register :special_author, :derived_from, :author, ASpecialAuthor do
@@ -55,6 +57,9 @@ describe "Registry#register / DSLContext" do
         derive_property :books do
           derive_property :title
         end
+
+        # relax this to just a slice of the original sequence
+        derive_property :numbers, :slice => 0...5
       end
 
       register :derived_book, :derived_from, :book do
@@ -124,8 +129,10 @@ describe "Registry#register / DSLContext" do
     derived_author = @registry[:derived_author]
     assert_instance_of Type::Object, derived_author
     assert_equal AnAuthor, derived_author.class_or_module
-    assert_equal [:age, :books, :name], derived_author.property_names.sort_by(&:to_s)
+    assert_equal [:age, :books, :name, :numbers], derived_author.property_names.sort_by(&:to_s)
     assert_equal [:title], derived_author[:books].type.property_names
+    assert_instance_of Type::Sequence, derived_author[:numbers]
+    assert_equal 0...5, derived_author[:numbers].slice
   end
 
   class Unicorn < OpenStruct; end

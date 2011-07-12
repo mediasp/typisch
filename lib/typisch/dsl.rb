@@ -140,7 +140,8 @@ module Typisch
           klass, properties = _normalize_object_args(original_type.class_or_module, *args)
           _object(klass, properties, original_type, &block_arg)
         when Type::Sequence
-          Type::Sequence.new(derived_from(original_type.type, *args, &block_arg))
+          slice_overrides = (args.last.is_a?(::Hash) && args.last[:slice]) ? args.pop : {}
+          Type::Sequence.new(derived_from(original_type.type, *args, &block_arg), slice_overrides)
         when Type::Union
           non_null = original_type.excluding_null
           raise "DSL doesn't support deriving from union types (except simple unions with null)" if Type::Union === non_null
