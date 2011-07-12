@@ -48,6 +48,16 @@ module Typisch
       end
     end
 
+    # the distinct type lattice within which this type lives.
+    # the type system as a whole can be seen as a set of non-overlapping type lattices, together
+    # with tagged unions drawn from them.
+    #
+    # the interface for a type lattice is just that it responds to 'check_subtype'; by default
+    # the class of a type implements this interface
+    def type_lattice
+      self.class
+    end
+
     # the tag of this particular type
     def tag
       raise NotImplementedError

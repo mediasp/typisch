@@ -31,7 +31,18 @@ module Typisch
 
       when Type::Sequence
         seen_values[value] = true
-        value.map {|v| serialize_to_jsonable(v, type.type, seen_values)}
+        if type.slice
+          slice = value[type.slice]
+          result = {
+            @type_tag_key => class_to_type_tag(value.class),
+            'range_start' => type.slice.begin
+          }
+          result['items'] = slice.map {|v| serialize_to_jsonable(v, type.type, seen_values)} if slice
+          result['total_items'] = value.length if type.total_length
+          result
+        else
+          value.map {|v| serialize_to_jsonable(v, type.type, seen_values)}
+        end
 
       when Type::Tuple
         seen_values[value] = true

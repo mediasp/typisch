@@ -71,8 +71,9 @@ module Typisch
       refinements ? Type::String.new(refinements) : registry[:string]
     end
 
-    def sequence(*type_args)
-      Type::Sequence.new(type(*type_args))
+    def sequence(*args)
+      seq_options = (args.last.is_a?(Hash) && args.last[:slice]) ? args.pop : {}
+      Type::Sequence.new(type(*args), seq_options)
     end
 
     def tuple(*types)

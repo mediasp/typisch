@@ -19,8 +19,6 @@ classes/type tags
   - maybe allow types other than Object to have a custom tag too? eg custom String-based
     types
 
-stop String type-checking as Sequence via its Enumerable implementation (which isn't even a sequence of characters, rather lines)
-
 compute canonicalised intersections
 compute canonicalised unions, with untagged unions replaced by a least upper bound
 

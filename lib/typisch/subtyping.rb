@@ -50,12 +50,12 @@ class Typisch::Type
         x.alternative_types.all? {|t| recursively_check_subtype[t, y]}
       elsif Union === y
         y.alternative_types.any? {|t| recursively_check_subtype[x, t]}
-      elsif x.class == y.class
-        # Hand over to that specific Type::Constructor subclass in order to check subtyping
-        # goals which are specific to its subtype lattice.
-        x.class.check_subtype(x, y, &recursively_check_subtype)
+      elsif x.type_lattice == y.type_lattice
+        # Hand over to that specific type_lattice in which both these Type::Constructor types
+        # live, in order to check subtyping goals which are specific to this lattice.
+        x.type_lattice.check_subtype(x, y, &recursively_check_subtype)
       else
-        # Different Type::Constructor subclasses are assumed non-overlapping, so we stop unless they're
+        # Different Type::Constructor lattices are non-overlapping so we stop unless they're
         # the same:
         false
       end
