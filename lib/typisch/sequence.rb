@@ -44,11 +44,15 @@ class Typisch::Type
       if options[:slice]
         @slice = options[:slice]
         @slice = (@slice.begin...@slice.end+1) unless @slice.exclude_end?
-        @total_length = options.fetch(:total_length, true)
+        @total_length = options[:total_length] != false
       end
     end
 
     attr_reader :slice, :total_length
+
+    def with_options(options)
+      self.class.new(@type, {:slice => @slice, :total_length => @total_length}.merge!(options))
+    end
 
     def subexpression_types
       [@type]
