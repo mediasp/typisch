@@ -1,4 +1,16 @@
 module Typisch
+  # String types support refinement types, specifying a set of allowed values,
+  # or a maximum length.
+  #
+  # About ruby Symbols: these are a pain in the arse.
+  # For now I'm allowing them to type-check interchangably with Strings.
+  # Since Typisch isn't specifically designed for Ruby's quirks but for more general
+  # data interchange, I don't think Symbol should have a special priviledged type
+  # of its own.
+  #
+  # Nevertheless if we ever allow custom type tags on String types (as we do for
+  # Object types at the moment) we could perhaps allow Symbol as a specially-tagged psuedo
+  # string like type. Although it's not a subclass of String, so hmm.
   class Type::String < Type::Constructor
     class << self
       def tag
@@ -11,7 +23,7 @@ module Typisch
 
       def check_subtype(x, y)
         x.equal?(y) || (
-          x.max_length <= y.max_length &&
+          (x.max_length || Infinity) <= (y.max_length || Infinity) &&
           (!y.values || (x.values && x.values.subset?(y.values)))
         )
       end
@@ -27,7 +39,7 @@ module Typisch
     Infinity = 1.0/0
 
     def max_length
-      @refinements[:max_length] || Infinity
+      @refinements[:max_length]
     end
 
     def values
@@ -39,9 +51,9 @@ module Typisch
     end
 
     def check_type(instance)
-      ::String === instance &&
-      (!values     || values.include?(instance)) &&
-      (instance.length <= max_length)
+      shallow_check_type(instance) &&
+      (!values     || values.include?(instance.to_s)) &&
+      (!max_length || instance.to_s.length <= max_length)
     end
 
     def to_s(*)
@@ -53,7 +65,7 @@ module Typisch
     end
 
     def shallow_check_type(instance)
-      ::String === instance
+      ::String === instance || ::Symbol === instance
     end
 
     Registry.register_global_type(:string, top_type)

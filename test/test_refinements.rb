@@ -19,13 +19,17 @@ describe "refinement types" do
 
     assert @registry[:string] === 'abcde'
     assert @registry[:short] === 'abcde'
+    assert @registry[:short] === :abcde
     refute @registry[:short] === 'abcdef'
+    refute @registry[:short] === :abcdef
     assert @registry[:long] === 'abcdef'
     refute @registry[:long] === 'abcdefghjkl'
 
     assert @registry[:ab] === 'a'
+    assert @registry[:ab] === :a
     assert @registry[:ab] === 'b'
     refute @registry[:ab] === 'c'
+    refute @registry[:ab] === :c
     refute @registry[:b] === 'a'
     assert @registry[:b] === 'b'
   end
