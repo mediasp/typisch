@@ -29,4 +29,6 @@ require 'typisch/type_checking'
 require 'typisch/poset_algorithms'
 require 'typisch/errors'
 
+require 'typisch/meta'
+
 require 'typisch/typed'
