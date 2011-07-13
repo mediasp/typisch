@@ -18,9 +18,14 @@ module Typisch
       serialize_to_jsonable(value).to_json
     end
 
+    def serialize_already_encountered_pair(value, type, existing_serialization)
+      raise SerializationError, "cyclic object / type graph when serializing"
+    end
+
     # http://work.tinou.com/2009/06/the-expression-problem-and-other-mysteries-of-life.html
-    def serialize_to_jsonable(value, type=@type, seen_values={})
-      raise Error::CyclicSerialization if seen_values[value]
+    def serialize_to_jsonable(value, type=@type, existing_serializations={})
+      existing = existing_serializations[[type, value]]
+      return serialize_already_encountered_pair(value, type, existing) if existing
 
       result = case type
       when Type::Date
@@ -30,36 +35,37 @@ module Typisch
         value.iso8601
 
       when Type::Sequence
-        seen_values[value] = true
         if type.slice
           slice = value[type.slice]
-          result = {
+          existing_serializations[[type, value]] = result = {
             @type_tag_key => class_to_type_tag(value.class),
             'range_start' => type.slice.begin
           }
-          result['items'] = slice.map {|v| serialize_to_jsonable(v, type.type, seen_values)} if slice
+          result['items'] = slice.map {|v| serialize_to_jsonable(v, type.type, existing_serializations)} if slice
           result['total_items'] = value.length if type.total_length
           result
         else
-          value.map {|v| serialize_to_jsonable(v, type.type, seen_values)}
+          result = existing_serializations[[type, value]] = []
+          value.each {|v| result << serialize_to_jsonable(v, type.type, existing_serializations)}
+          result
         end
 
       when Type::Tuple
-        seen_values[value] = true
-        type.types.zip(value).map {|t,v| serialize_to_jsonable(v,t,seen_values)}
+        result = existing_serializations[[type, value]] = []
+        type.types.zip(value).each {|t,v| result << serialize_to_jsonable(v,t,existing_serializations)}
+        result
 
       when Type::Object
-        seen_values[value] = true
-        result = {@type_tag_key => class_to_type_tag(value.class)}
+        result = existing_serializations[[type, value]] = {@type_tag_key => class_to_type_tag(value.class)}
         type.property_names_to_types.each do |prop_name, type|
-          result[prop_name.to_s] = serialize_to_jsonable(value.send(prop_name), type, seen_values)
+          result[prop_name.to_s] = serialize_to_jsonable(value.send(prop_name), type, existing_serializations)
         end
         result
 
       when Type::Union
         type = type.alternative_types.find {|t| t.shallow_check_type(value)}
         raise SerializationError, "No types in union #{type} matched #{value.inspect}, could not serialize" unless type
-        serialize_to_jsonable(value, type, seen_values)
+        serialize_to_jsonable(value, type, existing_serializations)
 
       when Type::Constructor # Numeric, Null, String, Boolean etc
         value
@@ -67,8 +73,6 @@ module Typisch
       else
         raise SerializationError, "Type #{type} not supported for serialization of #{value.inspect}"
       end
-
-      seen_values.delete(value)
 
       result
     end
