@@ -9,6 +9,7 @@ spec = Gem::Specification.new do |s|
   s.platform = Gem::Platform::RUBY
   s.authors = ['Matthew Willson']
   s.email = ["matthew@playlouder.com"]
+  s.rubyforge_project = 'typisch'
   s.summary = "A schema language / type system / validation framework, for semi-structured data and for data in dynamic languages"
 
   s.add_development_dependency('autotest')
