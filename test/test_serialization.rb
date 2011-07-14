@@ -1,7 +1,7 @@
 require 'test/common'
 require 'typisch/serialization'
 
-describe "JSONSerializer" do
+describe "JsonableSerializer" do
 
   class Zxc < OpenStruct; end
   class Vbn < OpenStruct; end
@@ -35,8 +35,8 @@ describe "JSONSerializer" do
 
 
     it "should serialize data directed by a type, only including in the serialization structural features of the data which the type refers to" do
-      @serializer = JSONSerializer.new(@registry[:foo])
-      jsonable = @serializer.serialize_to_jsonable(@object)
+      @serializer = JsonableSerializer.new(@registry[:foo])
+      jsonable = @serializer.serialize(@object)
 
       assert_equal jsonable, {
         "__class__" =>"OpenStruct",
@@ -68,11 +68,11 @@ describe "JSONSerializer" do
     end
 
     it "should let you customize the JSON property name / key used for type tags, and to customize the class to type tag mapping" do
-      @serializer = JSONSerializer.new(@registry[:foo],
+      @serializer = JsonableSerializer.new(@registry[:foo],
         :type_tag_key => 'DA_CLASS_IS',
         :class_to_type_tag => {Vbn => 'VeeBeeEn', Zxc => 'ZedExCee', OpenStruct => 'OpenSesame', Array => 'seq'}
       )
-      jsonable = @serializer.serialize_to_jsonable(@object)
+      jsonable = @serializer.serialize(@object)
 
       assert_equal jsonable, {
         "DA_CLASS_IS" =>"OpenSesame",
@@ -112,16 +112,16 @@ describe "JSONSerializer" do
         object(Vbn, :bar => :integer)
       )
     end
-    @serializer = JSONSerializer.new(@registry[:union])
+    @serializer = JsonableSerializer.new(@registry[:union])
 
-    jsonable = @serializer.serialize_to_jsonable(Zxc.new(:foo => 'hello'))
+    jsonable = @serializer.serialize(Zxc.new(:foo => 'hello'))
     assert_equal jsonable, {"__class__"=>"Zxc", "foo" => 'hello'}
 
-    jsonable = @serializer.serialize_to_jsonable(Vbn.new(:bar => 123))
+    jsonable = @serializer.serialize(Vbn.new(:bar => 123))
     assert_equal jsonable, {"__class__"=>"Vbn", "bar" => 123}
 
     assert_raises(SerializationError) do
-      @serializer.serialize_to_jsonable(OpenStruct.new(:bar => 123))
+      @serializer.serialize(OpenStruct.new(:bar => 123))
     end
   end
 end
