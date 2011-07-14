@@ -50,12 +50,6 @@ module Typisch
       self.class.tag
     end
 
-    def check_type(instance)
-      shallow_check_type(instance) &&
-      (!values     || values.include?(instance.to_s)) &&
-      (!max_length || instance.to_s.length <= max_length)
-    end
-
     def to_s(*)
       @name ? @name.inspect : "string(#{@refinements.inspect})"
     end
@@ -65,7 +59,9 @@ module Typisch
     end
 
     def shallow_check_type(instance)
-      ::String === instance || ::Symbol === instance
+      (::String === instance || ::Symbol === instance) &&
+      (!values     || values.include?(instance.to_s)) &&
+      (!max_length || instance.to_s.length <= max_length)
     end
 
     Registry.register_global_type(:string, top_type)

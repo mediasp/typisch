@@ -58,6 +58,10 @@ module Typisch
       self.class
     end
 
+    def check_type(instance)
+      shallow_check_type(instance)
+    end
+
     # the tag of this particular type
     def tag
       raise NotImplementedError
@@ -98,10 +102,6 @@ module Typisch
 
       def tag
         self.class.tag
-      end
-
-      def check_type(instance)
-        shallow_check_type(instance)
       end
 
       def to_s(*)
