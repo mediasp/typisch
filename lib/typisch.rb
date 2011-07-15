@@ -1,8 +1,6 @@
 module Typisch
 end
 
-require 'set'
-
 require 'typisch/type'
 require 'typisch/constructor'
 

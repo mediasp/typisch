@@ -24,16 +24,13 @@ module Typisch
       def check_subtype(x, y)
         x.equal?(y) || (
           (x.max_length || Infinity) <= (y.max_length || Infinity) &&
-          (!y.values || (x.values && x.values.subset?(y.values)))
+          (!y.values || (x.values && (x.values & y.values).length == x.values.length))
         )
       end
     end
 
     def initialize(refinements={})
       @refinements = refinements
-      if @refinements[:values] && !@refinements[:values].is_a?(::Set)
-        @refinements[:values] = ::Set.new(refinements[:values])
-      end
     end
 
     Infinity = 1.0/0
