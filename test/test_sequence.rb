@@ -123,4 +123,9 @@ describe "Sequence types" do
     lengthless_slice = Type::Sequence.new(@types[:integer], :slice => 1...3, :total_length => false)
     assert lengthless_slice === lengthless
   end
+
+  it "should allow map(x,y) as a special alias for sequence(tuple(x,y))" do
+    map = Type::Map.new(@types[:string], @types[:integer])
+    assert_equal map, Type::Sequence.new(Type::Tuple.new(@types[:string], @types[:integer]))
+  end
 end

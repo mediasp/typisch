@@ -52,7 +52,7 @@ class Typisch::Type
     attr_reader :slice, :total_length
 
     def with_options(options)
-      self.class.new(@type, {:slice => @slice, :total_length => @total_length}.merge!(options))
+      Sequence.new(@type, {:slice => @slice, :total_length => @total_length}.merge!(options))
     end
 
     def subexpression_types
@@ -102,6 +102,26 @@ class Typisch::Type
 
     def canonicalize!
       @type = @type.target
+    end
+  end
+
+  class Map < Sequence
+    def type_lattice; Sequence; end
+
+    def initialize(key_type, value_type)
+      super(Tuple.new(key_type, value_type))
+    end
+
+    def key_type;   @type[0]; end
+    def value_type; @type[1]; end
+
+    def to_string(depth, indent)
+      next_indent = "#{indent}  "
+      result = "map(\n#{next_indent}"
+      result << @type[0].to_s(depth+1, next_indent)
+      result << "\n#{next_indent}"
+      result << @type[1].to_s(depth+1, next_indent)
+      result << "\n#{indent})"
     end
   end
 

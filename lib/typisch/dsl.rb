@@ -128,6 +128,10 @@ module Typisch
       union(type(t), :null)
     end
 
+    def map(key_type, *value_type_args, &value_type_block)
+      Type::Map.new(type(key_type), type(*value_type_args, &value_type_block))
+    end
+
     def derived_from(original_type, *args, &block_arg)
       if args.empty? && !block_arg
         original_type

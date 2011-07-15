@@ -23,6 +23,7 @@ describe "Registry#register / DSLContext" do
         property :title, :string
         property :subtitle, union(:string, :null)
         property :author, :author
+        property :things, map(:string, :integer)
       end
 
       annotate "Someone who writes a thing which people read"
@@ -109,6 +110,10 @@ describe "Registry#register / DSLContext" do
 
     assert_same book, author[:books].type
     assert_same author[:books].type, book
+
+    assert_instance_of Type::Map, book[:things]
+    assert_instance_of Type::String, book[:things].key_type
+    assert_instance_of Type::Numeric, book[:things].value_type
 
     assert_equal ASpecialAuthor, special_author.class_or_module
     assert_instance_of Type::String, special_author[:name]
