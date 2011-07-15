@@ -55,7 +55,7 @@ module Typisch
   # subclasses:
   class Type::Any < Type::Union
     def initialize
-      super(*Constructor::CONSTRUCTOR_TYPE_SUBCLASSES.map {|klass| klass.top_type(self)})
+      super(*Type::LATTICES.map {|lattice| lattice.top_type(self)})
     end
 
     def to_s(*); @name.inspect; end

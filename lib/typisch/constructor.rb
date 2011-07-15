@@ -1,4 +1,6 @@
 module Typisch
+  Type::LATTICES = []
+
   # All types except Top, Bottom and Unions (which may necessarily involve more than one constructor type) have a
   # tag associated with them which is used at runtime to distinguish its instances somewhat from instances
   # of other types.
@@ -10,23 +12,8 @@ module Typisch
   # (such as Type::Object or Type::Numeric) there may be a non-trivial type lattice, eg for Numeric,
   # Int < Float, and for Object, the type lattice is based on a nominal tag inheritance hierarchy in
   # the host language together with structural subtyping rules for object properties.
-  #
-  # A list of 'reserved tags' is maintained globally, and any Type::Constructor subtype which allows custom
-  # user-specified tags to be used should ensure that they don't match any reserved tags.
   class Type::Constructor < Type
-    CONSTRUCTOR_TYPE_SUBCLASSES = []
-
     class << self
-      def inherited(subclass)
-        # we add any non-abstract subclasses to this list, which is used to
-        # construct the Any type. For now Constructor::Singleton is the only
-        # other abstract Type::Constructor subclass:
-        unless subclass == Type::Constructor::Singleton
-          CONSTRUCTOR_TYPE_SUBCLASSES << subclass
-        end
-        super
-      end
-
       # This should be the top in the type lattice for this class of taged types.
       # Its tag should be the top_tag above.
       # You are passed the overall_top, ie the top type of the overall type lattice,

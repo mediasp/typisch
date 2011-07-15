@@ -13,5 +13,6 @@ module Typisch
     end
 
     Registry.register_global_type(:null, top_type)
+    Type::LATTICES << self
   end
 end

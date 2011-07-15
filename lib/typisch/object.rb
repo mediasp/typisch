@@ -12,6 +12,7 @@ class Typisch::Type
         end
       end
     end
+    LATTICES << self
 
     def initialize(tag, property_names_to_types={})
       @tag = tag

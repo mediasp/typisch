@@ -13,6 +13,8 @@ module Typisch
     def shallow_check_type(instance)
       case instance when *VALID_IMPLEMENTATION_CLASSES then true else false end
     end
+
+    Type::LATTICES << self
   end
 
   class Type::Time < Type::Constructor::Singleton
@@ -37,5 +39,7 @@ module Typisch
     def shallow_check_type(instance)
       case instance when *VALID_IMPLEMENTATION_CLASSES then true else false end
     end
+
+    Type::LATTICES << self
   end
 end

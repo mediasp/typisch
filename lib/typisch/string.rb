@@ -28,6 +28,7 @@ module Typisch
         )
       end
     end
+    Type::LATTICES << self
 
     def initialize(refinements={})
       @refinements = refinements

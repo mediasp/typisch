@@ -38,6 +38,7 @@ class Typisch::Type
         )
       end
     end
+    LATTICES << self
 
     def initialize(type, options={})
       @type = type

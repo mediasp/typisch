@@ -59,6 +59,7 @@ module Typisch
         x.index_in_tower >= y.index_in_tower
       end
     end
+    Type::LATTICES << self
 
     def to_s(*)
       @name.inspect
