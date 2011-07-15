@@ -58,8 +58,6 @@ module Typisch
       @type_tag_key = (options[:type_tag_key] || '__class__').freeze
       @class_to_type_tag = options[:class_to_type_tag]
       @type_tag_to_class = options[:type_tag_to_class] || (@class_to_type_tag && @class_to_type_tag.invert)
-      @identity_property = options[:identity_property]
-      @identity_only_beyond_depth = options[:identity_only_beyond_depth]
       @elide_null_properties = options[:elide_null_properties]
       @max_depth = options.fetch(:max_depth, 15)
     end
@@ -101,19 +99,10 @@ module Typisch
 
     def serialize_object(value, type, depth)
       result = {@type_tag_key => class_to_type_tag(value.class)}
-      if @identity_only_beyond_depth &&
-         depth >= @identity_only_beyond_depth &&
-         (id_type = type[@identity_property])
-
-        result[@identity_property.to_s] = serialize_value(value.send(@identity_property), id_type)
-      else
-        result = {@type_tag_key => class_to_type_tag(value.class)}
-        type.property_names_to_types.each do |prop_name, type|
-          v = serialize_type(value.send(prop_name), type, depth+1)
-          result[prop_name.to_s] = v unless @elide_null_properties && v.nil?
-        end
+      type.property_names_to_types.each do |prop_name, type|
+        v = serialize_type(value.send(prop_name), type, depth+1)
+        result[prop_name.to_s] = v unless @elide_null_properties && v.nil?
       end
-
       result
     end
 
@@ -195,6 +184,61 @@ module Typisch
 
     def serialize_value(value, *)
       value
+    end
+  end
+
+  # Helps serialize types themselves, which are slightly tricky customers to serialize as JSON
+  # due to cycles etc. At present this is gotten around by referring to a type by its name only
+  # beyond depth 1 (or by its tag and version when it's an object type which was registered for
+  # a particular class/tag).
+  # This presumes that you have a way to get the serialization of all the types in the registry
+  # by their names or classes/tags.
+  # It also allows the tags of object types to be translated when serializing them, using a
+  # 'value_class_to_type_tag' argument corresponding to the 'class_to_type_tag' argument passed
+  # to serializers for values of these types.
+  # Uses META_TYPES
+  class JsonableTypeSerializer < JsonableSerializer
+    CLASS_TO_SERIALIZED_TAG = {
+      Type::String   => 'string',
+      Type::Boolean  => 'boolean',
+      Type::Null     => 'null',
+      Type::Numeric  => 'numeric',
+      Type::Date     => 'date',
+      Type::Time     => 'time',
+      Type::Sequence => 'sequence',
+      Type::Map      => 'map',
+      Type::Tuple    => 'tuple',
+      Type::Object   => 'object',
+      Type::Union    => 'union'
+    }
+
+    def initialize(options={})
+      options[:elide_null_properties] = true
+      options[:class_to_type_tag] = CLASS_TO_SERIALIZED_TAG
+      super(META_TYPES[:"Typisch::Type"], options)
+      @value_class_to_type_tag = options[:value_class_to_type_tag] || proc {|klass| klass.to_s}
+    end
+
+    def serialize_object(type, type_of_type, depth)
+      if depth > 0
+        if Type::Object === type && type.version
+          return {
+            @type_tag_key => @class_to_type_tag[type.class],
+            "version"     => type.version,
+            "tag"         => @value_class_to_type_tag[type.class_or_module]
+          }
+        elsif type_of_type[:name] && type.name
+          return {
+            @type_tag_key => @class_to_type_tag[type.class],
+            "name"        => type.name
+          }
+        end
+      end
+      result = super
+      if Type::Object === type
+        result['tag'] = @value_class_to_type_tag[type.class_or_module]
+      end
+      result
     end
   end
 end

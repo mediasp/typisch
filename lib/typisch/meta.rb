@@ -41,12 +41,14 @@ module Typisch
     end
 
     register_type_for_class(Type::Tuple) do
+      property :name, :string
       property :types, sequence(:"Typisch::Type")
     end
 
     register_type_for_class(Type::Object) do
-      property :property_names_to_types, sequence(tuple(:string, :"Typisch::Type"))
+      property :property_names_to_types, map(:string, :"Typisch::Type")
       property :tag, :string
+      property :version, nullable(:string)
     end
 
     register_type_for_class(Type::Union) do
