@@ -6,19 +6,17 @@ module Typisch
   # -
   #
   class Registry
-    attr_reader :types_by_name, :types_by_class, :types_by_class_and_version
+    attr_reader :types_by_name, :types_by_class_and_version
 
     def initialize(&block)
       @types_by_name = GLOBALS.dup
       @pending_canonicalization = {}
-      @types_by_class = {}
       @types_by_class_and_version = {}
       register(&block) if block
     end
 
     def [](name, version=nil)
-      name = :"#{name}" if name.is_a?(::Module)
-      name = :"#{name}__#{version}" if version
+      name = type_name_for_class(name, version) if name.is_a?(::Module)
       @types_by_name[name] ||= Type::NamedPlaceholder.new(name, self)
     end
 
@@ -114,12 +112,22 @@ module Typisch
       "Typisch::Registry.new do |r|\n  #{pairs.join("\n  ")}\nend"
     end
 
-    def register_type_for_class(klass, type)
-      @types_by_class[klass] = type
+    PRIMARY_VERSION_NAME = :main
+
+    def type_name_for_class(klass, version=PRIMARY_VERSION_NAME)
+      if !version || version == PRIMARY_VERSION_NAME
+        :"#{klass}"
+      else
+        :"#{klass}__#{version}"
+      end
     end
 
-    def register_version_type_for_class(klass, version, type)
-      @types_by_class_and_version[[klass, version]] = type
+    def register_type_for_class(object_type, version=PRIMARY_VERSION_NAME, &callback_on_canonicalization)
+      raise "non-object type passed to register_type_for_class" unless Type::Object === object_type
+      klass = object_type.class_or_module
+      register_type(type_name_for_class(klass, version), object_type, &callback_on_canonicalization)
+      object_type.send(:version=, version)
+      @types_by_class_and_version[[klass, version]] = object_type
     end
   end
 

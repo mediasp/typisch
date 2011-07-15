@@ -143,9 +143,7 @@ describe "Registry#register / DSLContext" do
   class Unicorn < OpenStruct; end
   class Horn < OpenStruct; end
 
-  # this is mainly just syntactic sugar around registering them with name :"#{klass.name}__#{version}",
-  # but it also keeps a track in the registry of which types have been registered for which classes (and versions)
-  it "should let you register types for particular classes (optionally for a particular 'version' of a particular class) and let you refer to them via the class (optionally with a :version => :foo parameter)" do
+  it "should let you register types for particular classes (specifying a 'version' of that class which the type represents, defaulting to :main) and let you refer to them via the class (optionally with a :version => :foo parameter)" do
     @registry.register do
       register_type_for_class(Unicorn) do
         property :name, :string
@@ -168,7 +166,7 @@ describe "Registry#register / DSLContext" do
     end
 
     assert_same @registry[Horn], @registry[:Horn]
-    assert_same @registry[Horn], @registry.types_by_class[Horn]
+    assert_same @registry[Horn], @registry.types_by_class_and_version[[Horn, :main]]
 
     assert_same @registry[Horn, :unicorn_with_name_only], @registry[:Horn__unicorn_with_name_only]
     assert_same @registry[Horn, :unicorn_with_name_only], @registry.types_by_class_and_version[[Horn, :unicorn_with_name_only]]

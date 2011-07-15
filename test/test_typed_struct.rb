@@ -38,8 +38,6 @@ describe "Typed" do
 
     assert_same Typisch[:Foo], Typisch[Foo]
     assert_same Typisch[:Bar], Typisch[Bar]
-    assert_same foo_type, Typisch.global_registry.types_by_class[Foo]
-    assert_same bar_type, Typisch.global_registry.types_by_class[Bar]
   end
 
   it "should let you specify which registry to register it in" do

@@ -72,8 +72,7 @@ module Typisch
         in_registry.register do
           type = _object(klass, {}, derive_from_type, &block)
           klass.send(:instance_variable_set, :@type, type)
-          in_registry.register_type(:"#{klass}", type, &callback)
-          in_registry.register_type_for_class(klass, type)
+          in_registry.register_type_for_class(type, &callback)
         end
         type
       end
@@ -86,8 +85,7 @@ module Typisch
         in_registry.register do
           type = _object(klass, {}, derive_from_type, &block)
           klass.version_types[version] = type
-          in_registry.register_type(:"#{klass}__#{version}", type, &callback)
-          in_registry.register_type_for_class(klass, type)
+          in_registry.register_type_for_class(type, version, &callback)
         end
         type
       end
@@ -116,8 +114,7 @@ module Typisch
             derive_all_properties
           end
           klass.send(:instance_variable_set, :@type, type)
-          in_registry.register_type(:"#{klass}", type, &callback)
-          in_registry.register_type_for_class(klass, type)
+          in_registry.register_type_for_class(type, &callback)
         end
       end
     end

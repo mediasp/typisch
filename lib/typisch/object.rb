@@ -26,6 +26,13 @@ class Typisch::Type
       tag.split('::').inject(::Object) {|a,b| a.const_get(b)}
     end
 
+    attr_reader :version
+    def version=(version)
+      raise "version already set" if @version
+      @version = version
+    end
+    private :version=
+
     def property_names
       @property_names_to_types.keys
     end
