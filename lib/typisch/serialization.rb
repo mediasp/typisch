@@ -26,7 +26,7 @@ module Typisch
       when Type::Object   then serialize_object(value, type, *args)
       when Type::Union    then serialize_union(value, type, *args)
       when Type::Constructor then serialize_value(value, type, *args) # Numeric, Null, String, Boolean etc
-      else raise SerializationError, "Type #{type} not supported for serialization of #{value.inspect}"
+      else raise SerializationError, "Type of class #{type.class} not supported for serialization of #{value.inspect}"
       end
     end
 

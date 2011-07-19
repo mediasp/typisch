@@ -166,10 +166,10 @@ describe "Registry#register / DSLContext" do
     end
 
     assert_same @registry[Horn], @registry[:Horn]
-    assert_same @registry[Horn], @registry.types_by_class_and_version[[Horn, :main]]
+    assert_same @registry[Horn], @registry.types_by_class_and_version[Horn][:main]
 
     assert_same @registry[Horn, :unicorn_with_name_only], @registry[:Horn__unicorn_with_name_only]
-    assert_same @registry[Horn, :unicorn_with_name_only], @registry.types_by_class_and_version[[Horn, :unicorn_with_name_only]]
+    assert_same @registry[Horn, :unicorn_with_name_only], @registry.types_by_class_and_version[Horn][:unicorn_with_name_only]
 
     assert_same @registry[Horn][:unicorn], @registry[Unicorn]
     assert_same @registry[Horn, :unicorn_with_name_only][:unicorn], @registry[Unicorn, :name_only]

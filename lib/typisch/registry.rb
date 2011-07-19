@@ -127,7 +127,8 @@ module Typisch
       klass = object_type.class_or_module
       register_type(type_name_for_class(klass, version), object_type, &callback_on_canonicalization)
       object_type.send(:version=, version)
-      @types_by_class_and_version[[klass, version]] = object_type
+      @types_by_class_and_version[klass] ||= {}
+      @types_by_class_and_version[klass][version] = object_type
     end
   end
 
