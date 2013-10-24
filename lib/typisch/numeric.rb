@@ -32,7 +32,11 @@ module Typisch
     # things slightly IIRC so may need tweaks to cope with this.
     # Either way ruby's hierarchy of numeric types is slightly idiosyncratic:
     complex  = new('Complex',  ::Numeric)
-    real     = new('Real',     ::Precision, ::BigDecimal, ::Rational)
+    real     = if RUBY_VERSION < '1.9.0'
+                 new('Real',     ::Precision, ::BigDecimal, ::Rational)
+               else
+                 new('Real',     ::BigDecimal, ::Rational)
+               end
     rational = new('Rational', ::Rational, ::Integer)
     integral = new('Integral', ::Integer)
 
