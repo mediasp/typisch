@@ -35,7 +35,7 @@ module Typisch
     real     = if RUBY_VERSION < '1.9.0'
                  new('Real',     ::Precision, ::BigDecimal, ::Rational)
                else
-                 new('Real',     ::BigDecimal, ::Rational)
+                 new('Real',     ::Rational, ::Float)
                end
     rational = new('Rational', ::Rational, ::Integer)
     integral = new('Integral', ::Integer)
