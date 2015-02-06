@@ -12,7 +12,6 @@ spec = Gem::Specification.new do |s|
   s.rubyforge_project = 'typisch'
   s.summary = "A schema language / type system / validation framework, for semi-structured data and for data in dynamic languages"
 
-  s.add_development_dependency('autotest')
   s.add_development_dependency('minitest', '~> 2.1.0')
   s.add_development_dependency('mocha', '~> 0.9.12')
   s.add_development_dependency('rcov', '~> 0.9.9')
