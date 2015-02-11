@@ -1,6 +1,3 @@
-# TODO: have this work with whichever of these classes
-# end up getting required, without having to require them
-# upfront
 require 'rational'
 require 'bigdecimal'
 require 'complex'
@@ -28,17 +25,14 @@ module Typisch
 
     attr_reader :valid_implementation_classes
 
-    # Note: these are based on how ruby 1.8.7 does it; 1.9 changes
-    # things slightly IIRC so may need tweaks to cope with this.
-    # Either way ruby's hierarchy of numeric types is slightly idiosyncratic:
     complex  = new('Complex',  ::Numeric)
     real     = if RUBY_VERSION < '1.9.0'
-                 new('Real',     ::Precision, ::BigDecimal, ::Rational)
+                 new('Real', ::Float, ::Bignum, ::BigDecimal, ::Precision, ::Rational, ::Integer)
                else
-                 new('Real',     ::Rational, ::Float)
+                 new('Real', ::Float, ::Bignum, ::BigDecimal, ::Rational, ::Integer)
                end
     rational = new('Rational', ::Rational, ::Integer)
-    integral = new('Integral', ::Integer)
+    integral = new('Integral', ::Integer) # => Bignum & FixNum
 
     Registry.register_global_type(:complex, complex)
 
